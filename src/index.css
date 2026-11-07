@@ -4,14 +4,14 @@
 
 @layer base {
   :root {
-    --background: #FAFAFA;
+    --background: #F8FAFC;
     --surface: #FFFFFF;
-    --surface-soft: #F4F4F5;
-    --text-primary: #09090B;
-    --text-secondary: #71717A;
-    --border: #E4E4E7;
-    --primary: #18181B;
-    --accent: #27272A;
+    --surface-soft: #F1F5F9;
+    --text-primary: #0F172A;
+    --text-secondary: #64748B;
+    --border: #E2E8F0;
+    --primary: #2563EB;
+    --accent: #4F46E5;
   }
 
   html.text-size-normal {
@@ -34,16 +34,16 @@
     margin: 0;
     padding: 0;
     font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-    color: #09090B;
-    background-color: #FAFAFA;
+    color: #0F172A;
+    background-color: #F8FAFC;
     line-height: 1.6;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
 
   html.dark body {
-    color: #FAFAFA;
-    background-color: #09090B;
+    color: #F8FAFC;
+    background-color: #0B1120;
   }
 }
 
@@ -52,18 +52,18 @@
   width: 100%;
   display: flex;
   flex-direction: column;
-  background-color: #FAFAFA;
+  background-color: #F8FAFC;
 }
 
 html.dark #root {
-  background-color: #09090B;
+  background-color: #0B1120;
 }
 
 /* Page transitions */
 @keyframes pageFadeIn {
   from {
     opacity: 0;
-    transform: translateY(2px);
+    transform: translateY(3px);
   }
   to {
     opacity: 1;
@@ -72,12 +72,12 @@ html.dark #root {
 }
 
 .page-transition {
-  animation: pageFadeIn 180ms ease-out forwards;
+  animation: pageFadeIn 220ms ease-out forwards;
 }
 
 /* Accessible focus ring */
 button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
-  outline: 2px solid #18181B;
+  outline: 2px solid #2563EB;
   outline-offset: 2px;
 }
 
