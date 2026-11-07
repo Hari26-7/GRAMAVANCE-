@@ -8,11 +8,11 @@ export const AppLayout: React.FC = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-[#F5F6F8] dark:bg-[#0B131E] text-[#202B3C] dark:text-slate-100 flex transition-colors">
+    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-50 flex transition-colors">
       {/* Mobile Backdrop */}
       {mobileOpen && (
         <div
-          className="fixed inset-0 z-30 bg-slate-900/40 backdrop-blur-xs lg:hidden transition-opacity"
+          className="fixed inset-0 z-30 bg-black/40 lg:hidden transition-opacity"
           onClick={() => setMobileOpen(false)}
           aria-hidden="true"
         />
@@ -28,13 +28,15 @@ export const AppLayout: React.FC = () => {
       </div>
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0 bg-[#F5F6F8] dark:bg-[#0B131E]">
+      <div className="flex-1 flex flex-col min-w-0 bg-zinc-50 dark:bg-zinc-950">
         <TopNavbar onToggleSidebar={() => setMobileOpen(!mobileOpen)} />
 
-        <main className="flex-1 p-4 sm:p-6 lg:p-8 w-full max-w-[1600px] mx-auto page-transition">
+        <main className="flex-1 p-4 sm:p-6 lg:p-8 w-full max-w-7xl mx-auto page-transition">
           <Outlet />
         </main>
       </div>
     </div>
   );
 };
+
+export default AppLayout;
