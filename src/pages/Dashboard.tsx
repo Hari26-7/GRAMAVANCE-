@@ -93,60 +93,73 @@ export const Dashboard: React.FC = () => {
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 -m-4 sm:-m-6 lg:-m-8 p-4 sm:p-6 lg:p-8 transition-colors">
       <div className="space-y-6 max-w-6xl mx-auto pb-12 text-left">
-        {/* 1. Welcoming Hero Banner (Clean SaaS White Card with Trust-Blue Focus) */}
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-6 sm:p-8 shadow-sm text-left transition-all duration-300">
-          <div className="flex items-center gap-2 mb-3">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-blue-50 dark:bg-blue-950/70 text-blue-700 dark:text-blue-300 border border-blue-200/60 dark:border-blue-800/60 shadow-2xs">
-              <ShieldCheck className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
-              <span>{t('officialGovtWebsite')}</span>
-            </span>
+        {/* 1. Welcoming Hero Banner (Premium Split-Pane Card with Community Image) */}
+        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden flex flex-col md:flex-row relative mb-8">
+          {/* Left Column (Content ~60%) */}
+          <div className="p-8 md:w-3/5 flex flex-col justify-center z-10 text-left">
+            <div className="flex items-center gap-2 mb-3">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-blue-50 dark:bg-blue-950/70 text-blue-700 dark:text-blue-300 border border-blue-200/60 dark:border-blue-800/60 shadow-2xs">
+                <ShieldCheck className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+                <span>{t('officialGovtWebsite')}</span>
+              </span>
 
-            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-indigo-50 dark:bg-indigo-950/70 text-indigo-600 dark:text-indigo-300 border border-indigo-100 dark:border-indigo-800/60 shadow-2xs">
-              <Sparkles className="w-3 h-3 text-indigo-500" />
-              <span>Generative AI Assisted</span>
-            </span>
+              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-indigo-50 dark:bg-indigo-950/70 text-indigo-600 dark:text-indigo-300 border border-indigo-100 dark:border-indigo-800/60 shadow-2xs">
+                <Sparkles className="w-3 h-3 text-indigo-500" />
+                <span>Generative AI Assisted</span>
+              </span>
+            </div>
+
+            <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white tracking-tight leading-tight">
+              {language === 'ta'
+                ? 'வணக்கம்! கிராமாவான்ஸ் தங்களுக்கு நல்வரவு கூறுகிறது.'
+                : 'Vanakkam! Welcome to Gramavance.'}
+            </h1>
+
+            <p className="text-sm sm:text-base text-slate-500 dark:text-slate-400 mt-2 max-w-xl leading-relaxed">
+              {language === 'ta'
+                ? 'அரசு திட்டங்களை அறிந்து கொள்ளவும், உங்கள் தொழிலை எளிதாக விரிவுபடுத்தவும் நாங்கள் உதவுகிறோம்.'
+                : 'Empowering farmers, rural women, artisans, and entrepreneurs to discover schemes, manage documents, and secure funding.'}
+            </p>
+
+            <div className="flex flex-wrap items-center gap-3 mt-6">
+              <button
+                onClick={handleVoiceWelcome}
+                className={`h-10 px-5 rounded-lg font-semibold text-sm flex items-center gap-2 transition-all cursor-pointer active:scale-95 shadow-sm ${
+                  isSpeakingWelcome
+                    ? 'bg-rose-600 text-white shadow-rose-500/20'
+                    : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-blue-500/20'
+                }`}
+                title="Listen to Spoken Voice Guidance"
+              >
+                <Volume2 className="w-4 h-4 shrink-0" />
+                <span>
+                  {isSpeakingWelcome
+                    ? 'Playing Guidance...'
+                    : language === 'ta'
+                    ? 'தமிழில் குரல் வழிகாட்டல்'
+                    : language === 'hi'
+                    ? 'आवाज़ में जानकारी सुनें'
+                    : 'Listen to Voice Guidance'}
+                </span>
+              </button>
+
+              <button
+                onClick={() => navigate('/eligibility')}
+                className="h-10 px-5 rounded-lg font-semibold text-sm border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 hover:bg-slate-50 dark:hover:bg-slate-700 shadow-2xs transition-all cursor-pointer active:scale-95"
+              >
+                Check My Eligibility →
+              </button>
+            </div>
           </div>
 
-          <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white tracking-tight leading-tight">
-            {language === 'ta'
-              ? 'வணக்கம்! கிராமாவான்ஸ் தங்களுக்கு நல்வரவு கூறுகிறது.'
-              : 'Vanakkam! Welcome to Gramavance.'}
-          </h1>
-
-          <p className="text-sm sm:text-base text-slate-500 dark:text-slate-400 mt-2 max-w-2xl leading-relaxed">
-            {language === 'ta'
-              ? 'அரசு திட்டங்களை அறிந்து கொள்ளவும், உங்கள் தொழிலை எளிதாக விரிவுபடுத்தவும் நாங்கள் உதவுகிறோம்.'
-              : 'Empowering farmers, rural women, artisans, and entrepreneurs to discover schemes, manage documents, and secure funding.'}
-          </p>
-
-          <div className="flex flex-wrap items-center gap-3 mt-6">
-            <button
-              onClick={handleVoiceWelcome}
-              className={`h-10 px-5 rounded-lg font-semibold text-sm flex items-center gap-2 transition-all cursor-pointer active:scale-95 shadow-sm ${
-                isSpeakingWelcome
-                  ? 'bg-rose-600 text-white shadow-rose-500/20'
-                  : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-blue-500/20'
-              }`}
-              title="Listen to Spoken Voice Guidance"
-            >
-              <Volume2 className="w-4 h-4 shrink-0" />
-              <span>
-                {isSpeakingWelcome
-                  ? 'Playing Guidance...'
-                  : language === 'ta'
-                  ? 'தமிழில் குரல் வழிகாட்டல்'
-                  : language === 'hi'
-                  ? 'आवाज़ में जानकारी सुनें'
-                  : 'Listen to Voice Guidance'}
-              </span>
-            </button>
-
-            <button
-              onClick={() => navigate('/eligibility')}
-              className="h-10 px-5 rounded-lg font-semibold text-sm border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 hover:bg-slate-50 dark:hover:bg-slate-700 shadow-2xs transition-all cursor-pointer active:scale-95"
-            >
-              Check My Eligibility →
-            </button>
+          {/* Right Column (Community Image ~40% with smooth gradient blend) */}
+          <div className="md:w-2/5 relative h-64 md:h-auto hidden md:block">
+            <img
+              src="/gramavance_hero.jpg"
+              alt="Community"
+              className="absolute inset-0 w-full h-full object-cover object-center"
+            />
+            <div className="absolute inset-0 bg-gradient-to-r from-white dark:from-slate-900 via-white/20 dark:via-slate-900/20 to-transparent pointer-events-none" />
           </div>
         </div>
 
