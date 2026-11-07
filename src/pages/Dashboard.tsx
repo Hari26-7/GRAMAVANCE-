@@ -4,13 +4,11 @@ import {
   Landmark,
   FileCheck2,
   FolderLock,
-  Store,
-  IndianRupee,
-  Mic,
   Volume2,
   ShieldCheck,
   PhoneCall,
   Info,
+  ArrowRight,
 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { VERIFIED_SCHEMES, MOCK_APPLICATIONS } from '../data/mockData';
@@ -56,122 +54,71 @@ export const Dashboard: React.FC = () => {
     }
   };
 
-  // Exactly 6 large, clear human-centered actions requested in Phase 2
-  const sixMainServices = [
+  // 3 Core Action Cards (Glassmorphic Grid)
+  const threeMainCards = [
     {
       id: 'srv_schemes',
-      title: t('actionFindHelp'),
+      title: language === 'ta' ? 'அரசு திட்டங்கள் & மானியங்கள்' : 'Find Government Help',
       description:
-        'Discover grants, government subsidies, and low-interest loans for your farm, shop, or rural business.',
-      descriptionTa:
-        'உங்கள் விவசாயம், கடை அல்லது தொழிலுக்கான அரசு மானியங்கள் மற்றும் குறைந்த வட்டிக் கடன்களை அறியுங்கள்.',
-      descriptionHi:
-        'अपने काम, दुकान और व्यवसाय के लिए सरकारी अनुदान, सब्सिडी और कम ब्याज वाले ऋण खोजें।',
+        language === 'ta'
+          ? 'உங்கள் விவசாயம், கடை அல்லது தொழிலுக்கான அரசு மானியங்கள் மற்றும் குறைந்த வட்டிக் கடன்களை அறியுங்கள்.'
+          : 'Discover grants, capital subsidies, and low-interest loans for your farm, shop, or rural business.',
       icon: Landmark,
-      iconColor: 'bg-blue-50 text-[#315D86] border border-blue-100 dark:bg-blue-950/60 dark:text-sky-300 dark:border-blue-800/60',
-      buttonLabel: 'Find Help →',
       route: '/schemes',
     },
     {
       id: 'srv_applications',
-      title: t('actionCheckApp'),
+      title: language === 'ta' ? 'விண்ணப்ப நிலை சரிபார்ப்பு' : 'Check My Application',
       description:
-        'See if your application has been approved, what stage it is in, or if any papers are missing.',
-      descriptionTa:
-        'உங்கள் விண்ணப்பம் ஏற்றுக்கொள்ளப்பட்டதா அல்லது ஆவணங்கள் தேவையா என்பதை எளிதாகப் பாருங்கள்.',
-      descriptionHi:
-        'देखें कि आपका आवेदन किस स्थिति में है या किसी अतिरिक्त कागजात की आवश्यकता है।',
+        language === 'ta'
+          ? 'உங்கள் விண்ணப்பம் ஏற்றுக்கொள்ளப்பட்டதா அல்லது கூடுதல் ஆவணங்கள் தேவையா என்பதை எளிதாகப் பாருங்கள்.'
+          : 'See if your application has been approved, what stage it is in, or if any papers are missing.',
       icon: FileCheck2,
-      iconColor: 'bg-slate-100 text-[#202B3C] border border-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700',
-      buttonLabel: 'Check My Application →',
       route: '/applications',
     },
     {
       id: 'srv_vault',
-      title: t('actionDocuments'),
+      title: language === 'ta' ? 'ஆவணங்கள் பாதுகாப்பு பெட்டகம்' : 'Get Help with Documents',
       description:
-        'Keep your Aadhaar card, bank passbook, and land papers safe. We automatically fill your forms.',
-      descriptionTa:
-        'உங்கள் ஆதார் அட்டை, வங்கி கணக்கு புத்தகம் மற்றும் பட்டா சான்றிதழ்களைப் பாதுகாப்பாக வையுங்கள்.',
-      descriptionHi:
-        'अपना आधार कार्ड, बैंक पासबुक और ज़मीन के कागजात सुरक्षित रखें। हम आपके फॉर्म भरने में मदद करेंगे।',
+        language === 'ta'
+          ? 'உங்கள் ஆதார் அட்டை, வங்கி கணக்கு புத்தகம் மற்றும் பட்டா சான்றிதழ்களைப் பாதுகாப்பாக வையுங்கள்.'
+          : 'Keep your Aadhaar card, bank passbook, and land papers safe. We automatically fill your forms.',
       icon: FolderLock,
-      iconColor: 'bg-amber-50 text-amber-700 border border-amber-200/60 dark:bg-amber-950/60 dark:text-amber-300 dark:border-amber-800/60',
-      buttonLabel: 'Open My Documents →',
       route: '/documents',
-    },
-    {
-      id: 'srv_business',
-      title: t('actionFindBuyers'),
-      description:
-        'Connect directly with verified wholesale buyers who want to purchase crops, milk, and handicrafts.',
-      descriptionTa:
-        'மஞ்சள், நவதானியங்கள் மற்றும் கைத்தறி ஆடைகளை மொத்தமாக வாங்கும் நல்ல வணிகர்களைத் தொடர்பு கொள்ளுங்கள்.',
-      descriptionHi:
-        'सीधे सत्यापित खरीदारों से जुड़ें जो फसलें, दूध और हस्तशिल्प उचित मूल्य पर खरीदना चाहते हैं।',
-      icon: Store,
-      iconColor: 'bg-purple-50 text-purple-700 border border-purple-200/60 dark:bg-purple-950/60 dark:text-purple-300 dark:border-purple-800/60',
-      buttonLabel: 'Find Buyers →',
-      route: '/marketplace',
-    },
-    {
-      id: 'srv_financial',
-      title: t('actionMoneyLoans'),
-      description:
-        'See your income, business expenses, bank savings, and loan repayment record in simple words.',
-      descriptionTa:
-        'உங்கள் தொழிலுக்கு வந்த பணம், செய்யப்பட்ட செலவுகள் மற்றும் வங்கிக் கடன் விவரங்களை எளிய முறையில் பாருங்கள்.',
-      descriptionHi:
-        'अपने व्यवसाय की कमाई, खर्च, बचत और बैंक ऋण चुकाने का रिकॉर्ड आसान शब्दों में देखें।',
-      icon: IndianRupee,
-      iconColor: 'bg-emerald-50 text-[#43836F] border border-emerald-200/60 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800/60',
-      buttonLabel: 'View My Money →',
-      route: '/financial-readiness',
-    },
-    {
-      id: 'srv_assistant',
-      title: t('actionTalkGramavance'),
-      description:
-        'Ask questions in your own language by typing or speaking through your phone. We answer patiently.',
-      descriptionTa:
-        'உங்கள் தாய்மொழியில் பேசி அரசு திட்டங்கள் பற்றிய சந்தேகங்களுக்கு உடனடி எளிய பதில் பெறுங்கள்.',
-      descriptionHi:
-        'अपने फ़ोन से बोलकर या लिखकर अपनी भाषा में सवाल पूछें। हम धैर्यपूर्वक मार्गदर्शन करेंगे।',
-      icon: Mic,
-      iconColor: 'bg-sky-50 text-[#315D86] border border-sky-200/60 dark:bg-sky-950/60 dark:text-sky-300 dark:border-sky-800/60',
-      buttonLabel: 'Talk to Assistant 🎤',
-      route: '/assistant',
     },
   ];
 
   const primaryScheme = VERIFIED_SCHEMES[0];
 
   return (
-    <div className="space-y-8 max-w-6xl mx-auto pb-12">
-      {/* 1. Welcoming Hero Banner for Elderly & Rural Users (Question-First) */}
-      <div className="bg-white dark:bg-[#0E1A29] rounded-2xl border border-[#E3E7ED] dark:border-slate-800 p-6 sm:p-8 shadow-[0_4px_20px_rgba(32,43,60,0.06),0_1px_3px_rgba(32,43,60,0.04)] flex flex-col md:flex-row items-center justify-between gap-6">
-        <div className="space-y-4 max-w-2xl text-left">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/70 text-[#43836F] dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800/60 font-bold text-xs">
+    <div className="bg-gradient-to-br from-slate-50 via-blue-50/50 to-slate-100 dark:from-slate-950 dark:via-slate-900/60 dark:to-slate-950 min-h-screen -m-4 sm:-m-6 lg:-m-8 p-4 sm:p-6 lg:p-8 transition-colors">
+      <div className="space-y-8 max-w-6xl mx-auto pb-12">
+        {/* 1. The Hero Section (Sleek & Professional — Text Focused, No Images) */}
+        <div className="bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl border border-white/80 dark:border-white/10 shadow-sm rounded-2xl p-8 mb-8 flex flex-col items-start text-left transition-all duration-300">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50/80 dark:bg-emerald-950/70 text-emerald-700 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800/60 font-bold text-xs mb-3">
             <ShieldCheck className="w-3.5 h-3.5 shrink-0" />
             <span>{t('officialGovtWebsite')}</span>
           </div>
 
-          <h1 className="text-3xl sm:text-4xl font-extrabold text-[#202B3C] dark:text-white leading-tight">
-            {t('welcomeHeading')}
+          <h1 className="text-slate-900 dark:text-white font-bold text-3xl sm:text-4xl tracking-tight leading-tight">
+            {language === 'ta'
+              ? 'வணக்கம்! கிராமாவான்ஸ் தங்களுக்கு நல்வரவு கூறுகிறது.'
+              : 'Vanakkam! Welcome to Gramavance.'}
           </h1>
 
-          <p className="text-base sm:text-lg font-medium text-[#647184] dark:text-slate-300 leading-relaxed">
-            {t('welcomeSubheading')}
+          <p className="text-slate-600 dark:text-slate-300 mt-2 text-base sm:text-lg max-w-3xl leading-relaxed">
+            {language === 'ta'
+              ? 'அரசு திட்டங்களை அறிந்து கொள்ளவும், உங்கள் தொழிலை எளிதாக விரிவுபடுத்தவும் நாங்கள் உதவுகிறோம்.'
+              : 'We help you find government support and grow your business with simple, transparent, and accessible guidance.'}
           </p>
 
-          {/* Voice Guidance Action (Calm, no pulse animation) */}
-          <div className="pt-2 flex flex-wrap items-center gap-3">
+          <div className="flex flex-wrap gap-4 mt-6">
             <button
               onClick={handleVoiceWelcome}
               className={`h-11 px-5 rounded-xl font-bold text-sm sm:text-base flex items-center gap-2.5 transition-all cursor-pointer active:scale-95 ${
                 isSpeakingWelcome
                   ? 'bg-rose-600 text-white shadow-sm'
-                  : 'bg-[#43836F] hover:bg-[#366959] text-white shadow-[0_2px_8px_rgba(67,131,111,0.25)]'
+                  : 'bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white shadow-sm'
               }`}
               title="Click to hear spoken voice guidance"
             >
@@ -180,7 +127,7 @@ export const Dashboard: React.FC = () => {
                 {isSpeakingWelcome
                   ? 'Playing Voice Guidance...'
                   : language === 'ta'
-                  ? 'தமிழில் குரல் வழிகாட்டலைக் கேட்க'
+                  ? 'தமிழில் வழிகாட்டலைக் கேட்க'
                   : language === 'hi'
                   ? 'आवाज़ में जानकारी सुनें'
                   : 'Listen to Voice Guidance'}
@@ -189,226 +136,202 @@ export const Dashboard: React.FC = () => {
 
             <button
               onClick={() => navigate('/eligibility')}
-              className="h-11 px-5 rounded-xl font-bold text-sm sm:text-base bg-white dark:bg-slate-800 text-[#202B3C] dark:text-slate-100 border border-[#E3E7ED] dark:border-slate-700 hover:bg-[#F0F2F5] dark:hover:bg-slate-700 shadow-2xs transition-all cursor-pointer active:scale-95"
+              className="h-11 px-5 rounded-xl font-bold text-sm sm:text-base bg-white/80 dark:bg-slate-800/80 backdrop-blur-md text-slate-800 dark:text-slate-100 border border-white/90 dark:border-white/10 hover:bg-white dark:hover:bg-slate-800 shadow-sm transition-all cursor-pointer active:scale-95"
             >
               Find Government Financial Help →
             </button>
           </div>
         </div>
 
-        {/* Friendly Hero Photograph */}
-        <div className="w-full md:w-80 shrink-0">
-          <div className="rounded-2xl overflow-hidden border border-[#E3E7ED] dark:border-slate-700 shadow-sm">
-            <img
-              src="/gramavance_hero.jpg"
-              alt="Elderly rural farmer and woman smiling together"
-              className="w-full h-52 object-cover object-center"
-            />
+        {/* 2. The 3 Action Cards (Glassmorphic Grid) */}
+        <div>
+          <div className="mb-5 text-left">
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+              {t('whatHelpToday')}
+            </h2>
+            <p className="text-sm sm:text-base text-slate-600 dark:text-slate-300 mt-1">
+              Choose any service below to explore schemes, check status, or manage your papers.
+            </p>
           </div>
-        </div>
-      </div>
 
-      {/* 2. Question-First Header & All 6 Core Action Cards */}
-      <div>
-        <div className="mb-5 text-left">
-          <h2 className="text-2xl sm:text-3xl font-extrabold text-[#202B3C] dark:text-white">
-            {t('whatHelpToday')}
-          </h2>
-          <p className="text-sm sm:text-base text-[#647184] dark:text-slate-300 mt-1">
-            Choose any option below. We will guide you with patient, step-by-step instructions.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-          {sixMainServices.map((service, index) => {
-            const Icon = service.icon;
-            return (
-              <div
-                key={service.id}
-                onClick={() => navigate(service.route)}
-                className="p-6 rounded-2xl bg-white dark:bg-[#0E1A29] border border-[#E3E7ED] dark:border-slate-800 neu-card-hover cursor-pointer flex flex-col justify-between space-y-4 shadow-[0_4px_20px_rgba(32,43,60,0.06),0_1px_3px_rgba(32,43,60,0.04)]"
-              >
-                <div className="space-y-3 text-left">
-                  <div className="flex items-center justify-between">
-                    <div
-                      className={`w-12 h-12 rounded-xl flex items-center justify-center ${service.iconColor} shadow-2xs`}
-                    >
-                      <Icon className="w-6 h-6" />
-                    </div>
-                    <span className="text-xs font-bold text-[#647184] bg-[#F0F2F5] dark:bg-slate-800 border border-[#E3E7ED] dark:border-slate-700 px-2.5 py-0.5 rounded-full">
-                      Option {index + 1}
-                    </span>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {threeMainCards.map((card) => {
+              const Icon = card.icon;
+              return (
+                <div
+                  key={card.id}
+                  onClick={() => navigate(card.route)}
+                  className="bg-white/70 dark:bg-slate-900/70 backdrop-blur-md border border-white/60 dark:border-white/10 shadow-[0_8px_30px_rgb(0,0,0,0.04)] rounded-2xl p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg flex flex-col h-full cursor-pointer text-left group"
+                >
+                  {/* Icon at the top */}
+                  <div className="text-blue-600 dark:text-sky-400 bg-blue-50 dark:bg-blue-950/60 p-3 rounded-xl w-fit shadow-xs">
+                    <Icon className="w-6 h-6" />
                   </div>
 
-                  <h3 className="text-lg font-bold text-[#202B3C] dark:text-white leading-snug">
-                    {service.title}
+                  {/* Title */}
+                  <h3 className="text-lg font-semibold text-slate-800 dark:text-white mt-4 leading-snug">
+                    {card.title}
                   </h3>
 
-                  <p className="text-sm text-[#647184] dark:text-slate-300 leading-relaxed">
-                    {language === 'ta'
-                      ? service.descriptionTa
-                      : language === 'hi'
-                      ? service.descriptionHi
-                      : service.description}
+                  {/* Description */}
+                  <p className="text-sm text-slate-500 dark:text-slate-300 mt-2 flex-grow leading-relaxed">
+                    {card.description}
                   </p>
+
+                  {/* New Link at absolute bottom */}
+                  <span className="text-blue-600 dark:text-sky-400 font-semibold text-sm mt-6 flex items-center gap-1 cursor-pointer group-hover:gap-2 transition-all">
+                    Explore <ArrowRight className="w-4 h-4" />
+                  </span>
                 </div>
-
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    navigate(service.route);
-                  }}
-                  className="w-full min-h-[44px] rounded-xl bg-[#315D86] hover:bg-[#26496B] text-white font-bold text-sm flex items-center justify-center gap-2 transition-all cursor-pointer shadow-[0_2px_8px_rgba(49,93,134,0.2)] active:scale-[0.985]"
-                >
-                  <span>{service.buttonLabel}</span>
-                </button>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* 3. Plain Language Terminology Helper Card */}
-      <div className="p-5 sm:p-6 rounded-2xl bg-white dark:bg-[#0E1A29] border border-[#E3E7ED] dark:border-slate-800 shadow-[0_4px_20px_rgba(32,43,60,0.06)] space-y-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2 text-[#202B3C] dark:text-slate-100 font-bold text-base">
-            <Info className="w-5 h-5 text-[#315D86] shrink-0" />
-            <span>Understanding Common Government Terms in Everyday Words</span>
+              );
+            })}
           </div>
-          <button
-            onClick={() => setShowTermHelp(!showTermHelp)}
-            className="text-xs sm:text-sm font-bold text-[#315D86] hover:underline cursor-pointer"
-          >
-            {showTermHelp ? 'Hide Explanations' : 'Show Everyday Explanations'}
-          </button>
         </div>
 
-        {showTermHelp && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 text-sm text-[#202B3C] dark:text-slate-200">
-            <div className="p-4 bg-[#F0F2F5] dark:bg-slate-800 rounded-xl border border-[#E3E7ED] dark:border-slate-700 space-y-1 text-left shadow-[inset_0_2px_4px_rgba(32,43,60,0.03)]">
-              <strong className="text-[#202B3C] dark:text-white block font-bold">
-                What does "Subsidy" mean?
-              </strong>
-              <p className="text-xs sm:text-sm text-[#647184] dark:text-slate-300 leading-relaxed">
-                {t('subsidyTerm')}
-              </p>
+        {/* 3. Plain Language Terminology Helper Card (Glassmorphic) */}
+        <div className="p-6 rounded-2xl bg-white/60 dark:bg-slate-900/60 backdrop-blur-md border border-white/80 dark:border-white/10 shadow-sm space-y-3 text-left">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 text-slate-800 dark:text-slate-100 font-bold text-base">
+              <Info className="w-5 h-5 text-blue-600 dark:text-sky-400 shrink-0" />
+              <span>Understanding Common Government Terms in Everyday Words</span>
             </div>
-            <div className="p-4 bg-[#F0F2F5] dark:bg-slate-800 rounded-xl border border-[#E3E7ED] dark:border-slate-700 space-y-1 text-left shadow-[inset_0_2px_4px_rgba(32,43,60,0.03)]">
-              <strong className="text-[#202B3C] dark:text-white block font-bold">
-                What does "Collateral" mean?
-              </strong>
-              <p className="text-xs sm:text-sm text-[#647184] dark:text-slate-300 leading-relaxed">
-                {t('collateralTerm')}
-              </p>
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* 4. Simple Guidance Card: Recommended Next Step (PMEGP) */}
-      <div className="p-6 rounded-2xl bg-white dark:bg-[#0E1A29] border border-[#E3E7ED] dark:border-slate-800 shadow-[0_4px_20px_rgba(32,43,60,0.06)] flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-        <div className="space-y-2 max-w-2xl text-left">
-          <div className="flex items-center gap-2">
-            <span className="px-2.5 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-[#43836F] dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800/60 font-bold text-xs uppercase">
-              Recommended for You
-            </span>
-            <span className="text-xs font-semibold text-[#647184] dark:text-slate-400">
-              Verified Public Scheme Data
-            </span>
-          </div>
-
-          <h3 className="text-xl sm:text-2xl font-extrabold text-[#202B3C] dark:text-white">
-            {primaryScheme.title[language] || primaryScheme.title.en}
-          </h3>
-
-          <p className="text-sm sm:text-base text-[#647184] dark:text-slate-300 leading-relaxed">
-            Get up to 35% non-repayable subsidy from the government to buy machines or setup your rural enterprise.
-            You only need to invest 5% to 10% of your own money.
-          </p>
-        </div>
-
-        <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto shrink-0">
-          <Button
-            variant="teal"
-            size="lg"
-            onClick={() => navigate('/eligibility')}
-            className="w-full sm:w-auto min-h-[46px] px-6 rounded-xl text-sm sm:text-base font-bold"
-          >
-            Check If I Qualify →
-          </Button>
-        </div>
-      </div>
-
-      {/* 5. Active Applications Summary (Plain Language) */}
-      <div className="p-6 rounded-2xl bg-white dark:bg-[#0E1A29] border border-[#E3E7ED] dark:border-slate-800 shadow-[0_4px_20px_rgba(32,43,60,0.06)] space-y-4">
-        <div className="flex items-center justify-between">
-          <div className="text-left">
-            <h3 className="text-xl font-bold text-[#202B3C] dark:text-white">
-              My Active Applications
-            </h3>
-            <p className="text-sm text-[#647184] dark:text-slate-400">
-              Demonstration progress tracker of your government assistance requests
-            </p>
-          </div>
-
-          <button
-            onClick={() => navigate('/applications')}
-            className="text-sm font-bold text-[#315D86] hover:underline cursor-pointer"
-          >
-            View All Applications →
-          </button>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
-          {MOCK_APPLICATIONS.slice(0, 2).map((app) => (
-            <div
-              key={app.id}
-              className="p-4 rounded-xl bg-[#F0F2F5] dark:bg-slate-800 border border-[#E3E7ED] dark:border-slate-700 space-y-2 text-left shadow-2xs"
+            <button
+              onClick={() => setShowTermHelp(!showTermHelp)}
+              className="text-xs sm:text-sm font-bold text-blue-600 dark:text-sky-400 hover:underline cursor-pointer"
             >
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-mono text-[#647184]">{app.applicationNumber}</span>
-                <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200/60 dark:bg-amber-950 dark:text-amber-300">
-                  {app.status}
-                </span>
+              {showTermHelp ? 'Hide Explanations' : 'Show Everyday Explanations'}
+            </button>
+          </div>
+
+          {showTermHelp && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 text-sm text-slate-800 dark:text-slate-200">
+              <div className="p-4 bg-white/50 dark:bg-slate-800/50 backdrop-blur-sm rounded-xl border border-white/80 dark:border-white/10 space-y-1 text-left shadow-xs">
+                <strong className="text-slate-900 dark:text-white block font-bold">
+                  What does "Subsidy" mean?
+                </strong>
+                <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+                  {t('subsidyTerm')}
+                </p>
               </div>
-              <h4 className="text-base font-bold text-[#202B3C] dark:text-slate-100">
-                {app.schemeTitle}
-              </h4>
-              <p className="text-xs sm:text-sm text-[#647184] dark:text-slate-300">
-                {app.notes}
-              </p>
-              <div className="flex items-center justify-between pt-2 border-t border-[#E3E7ED] dark:border-slate-700 text-xs font-medium text-[#647184]">
-                <span>Requested: ₹{(app.requestedAmount / 100000).toFixed(1)} Lakh</span>
-                <span className="text-[#43836F] font-bold">Target Review: {app.targetDeadline}</span>
+              <div className="p-4 bg-white/50 dark:bg-slate-800/50 backdrop-blur-sm rounded-xl border border-white/80 dark:border-white/10 space-y-1 text-left shadow-xs">
+                <strong className="text-slate-900 dark:text-white block font-bold">
+                  What does "Collateral" mean?
+                </strong>
+                <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+                  {t('collateralTerm')}
+                </p>
               </div>
             </div>
-          ))}
+          )}
         </div>
-      </div>
 
-      {/* 6. Toll-Free Helpline Strip */}
-      <div className="rounded-2xl bg-white dark:bg-[#0E1A29] border border-[#E3E7ED] dark:border-slate-800 p-6 shadow-[0_4px_20px_rgba(32,43,60,0.06)] flex flex-col sm:flex-row items-center justify-between gap-4">
-        <div className="flex items-center gap-4 text-left">
-          <div className="w-12 h-12 rounded-xl bg-emerald-50 text-[#43836F] border border-emerald-200/60 dark:bg-emerald-950 dark:text-emerald-300 flex items-center justify-center shrink-0 shadow-2xs">
-            <PhoneCall className="w-6 h-6 text-[#43836F]" />
-          </div>
-          <div>
-            <h4 className="text-lg font-bold text-[#202B3C] dark:text-white">
-              Need assistance on phone?
-            </h4>
-            <p className="text-sm text-[#647184] dark:text-slate-300">
-              Call our free government support line: <strong className="text-[#202B3C] dark:text-slate-200">1800-3000-0034</strong> (No charges)
+        {/* 4. Simple Guidance Card: Recommended Next Step (PMEGP) */}
+        <div className="p-6 sm:p-7 rounded-2xl bg-white/60 dark:bg-slate-900/60 backdrop-blur-md border border-white/80 dark:border-white/10 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-6 text-left">
+          <div className="space-y-2 max-w-2xl">
+            <div className="flex items-center gap-2">
+              <span className="px-2.5 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800/60 font-bold text-xs uppercase">
+                Recommended for You
+              </span>
+              <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                Verified Public Scheme Data
+              </span>
+            </div>
+
+            <h3 className="text-xl sm:text-2xl font-extrabold text-slate-900 dark:text-white">
+              {primaryScheme.title[language] || primaryScheme.title.en}
+            </h3>
+
+            <p className="text-sm sm:text-base text-slate-600 dark:text-slate-300 leading-relaxed">
+              Get up to 35% non-repayable subsidy from the government to buy machines or setup your rural enterprise.
+              You only need to invest 5% to 10% of your own money.
             </p>
           </div>
+
+          <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto shrink-0">
+            <Button
+              variant="teal"
+              size="lg"
+              onClick={() => navigate('/eligibility')}
+              className="w-full sm:w-auto min-h-[46px] px-6 rounded-xl text-sm sm:text-base font-bold bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white shadow-sm border-0"
+            >
+              Check If I Qualify →
+            </Button>
+          </div>
         </div>
 
-        <button
-          onClick={() => navigate('/help')}
-          className="min-h-[44px] px-5 rounded-xl bg-[#315D86] hover:bg-[#26496B] text-white font-bold text-sm shrink-0 cursor-pointer shadow-[0_2px_8px_rgba(49,93,134,0.2)] active:scale-95 transition-all"
-        >
-          View Phone Directory
-        </button>
+        {/* 5. Active Applications Summary */}
+        <div className="p-6 rounded-2xl bg-white/60 dark:bg-slate-900/60 backdrop-blur-md border border-white/80 dark:border-white/10 shadow-sm space-y-4 text-left">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-xl font-bold text-slate-900 dark:text-white">
+                My Active Applications
+              </h3>
+              <p className="text-sm text-slate-500 dark:text-slate-400">
+                Progress tracker of your government assistance requests
+              </p>
+            </div>
+
+            <button
+              onClick={() => navigate('/applications')}
+              className="text-sm font-bold text-blue-600 dark:text-sky-400 hover:underline cursor-pointer"
+            >
+              View All Applications →
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+            {MOCK_APPLICATIONS.slice(0, 2).map((app) => (
+              <div
+                key={app.id}
+                className="p-4 rounded-xl bg-white/50 dark:bg-slate-800/50 backdrop-blur-sm border border-white/80 dark:border-white/10 space-y-2 text-left shadow-xs"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-mono text-slate-500">{app.applicationNumber}</span>
+                  <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200/60 dark:bg-amber-950 dark:text-amber-300">
+                    {app.status}
+                  </span>
+                </div>
+                <h4 className="text-base font-bold text-slate-900 dark:text-slate-100">
+                  {app.schemeTitle}
+                </h4>
+                <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300">
+                  {app.notes}
+                </p>
+                <div className="flex items-center justify-between pt-2 border-t border-slate-200/60 dark:border-slate-700/60 text-xs font-medium text-slate-500">
+                  <span>Requested: ₹{(app.requestedAmount / 100000).toFixed(1)} Lakh</span>
+                  <span className="text-emerald-600 dark:text-emerald-400 font-bold">Target Review: {app.targetDeadline}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* 6. Toll-Free Helpline Strip */}
+        <div className="rounded-2xl bg-white/60 dark:bg-slate-900/60 backdrop-blur-md border border-white/80 dark:border-white/10 p-6 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4 text-left">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-200/60 dark:bg-emerald-950 dark:text-emerald-300 flex items-center justify-center shrink-0 shadow-xs">
+              <PhoneCall className="w-6 h-6" />
+            </div>
+            <div>
+              <h4 className="text-lg font-bold text-slate-900 dark:text-white">
+                Need assistance on phone?
+              </h4>
+              <p className="text-sm text-slate-600 dark:text-slate-300">
+                Call our free government support line: <strong className="text-slate-900 dark:text-slate-100">1800-3000-0034</strong> (No charges)
+              </p>
+            </div>
+          </div>
+
+          <button
+            onClick={() => navigate('/help')}
+            className="min-h-[44px] px-5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm shrink-0 cursor-pointer shadow-sm active:scale-95 transition-all"
+          >
+            View Phone Directory
+          </button>
+        </div>
       </div>
     </div>
   );
 };
+
+export default Dashboard;
