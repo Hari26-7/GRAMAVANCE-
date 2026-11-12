@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import MarkdownRenderer from './MarkdownRenderer';
+import { sendGeminiChat } from '../services/geminiService';
 
 export default function GramavanceChat() {
   const [input, setInput] = useState('');
@@ -22,23 +23,31 @@ export default function GramavanceChat() {
         body: JSON.stringify({ message: userText }),
       });
 
-      if (!response.ok) throw new Error('Server returned an error');
-
-      const data = await response.json();
-
-      // Prevent blank squares by checking if data.text exists
-      if (data && data.text) {
-        setMessages(prev => [...prev, { role: 'ai', text: data.text }]);
-      } else {
-        throw new Error('Empty response from AI');
+      if (response.ok) {
+        const data = await response.json();
+        if (data && data.text) {
+          setMessages(prev => [...prev, { role: 'ai', text: data.text }]);
+          return;
+        }
       }
-    } catch (error) {
-      console.error(error);
+      throw new Error('Serverless route returned error status');
+    } catch (serverError) {
+      console.warn('[Gramavance AI] Serverless /api/chat unavailable, attempting direct fallback...', serverError);
+      try {
+        const fallback = await sendGeminiChat([{ role: 'user', text: userText }]);
+        if (fallback.text) {
+          setMessages(prev => [...prev, { role: 'ai', text: fallback.text }]);
+          return;
+        }
+      } catch (clientError) {
+        console.error('[Gramavance AI] Fallback failed:', clientError);
+      }
+
       setMessages(prev => [
         ...prev,
         {
           role: 'ai',
-          text: '⚠️ API Connection Error: Please check that your GEMINI_API_KEY is correctly saved in Vercel Environment Variables and redeployed.',
+          text: '⚠️ API Connection Error: Please verify that GEMINI_API_KEY is configured in your Vercel Environment Variables or .env file.',
         },
       ]);
     } finally {

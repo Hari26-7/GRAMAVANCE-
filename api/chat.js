@@ -14,9 +14,12 @@ export default async function handler(req, res) {
     return res.status(400).json({ message: 'Request body must include a non-empty "message" field.' });
   }
 
-  const apiKey = process.env.GEMINI_API_KEY;
+  const apiKey =
+    process.env.GEMINI_API_KEY ||
+    process.env.VITE_GEMINI_API_KEY;
+
   if (!apiKey) {
-    return res.status(500).json({ message: 'GEMINI_API_KEY is not configured. Please add it in Vercel Environment Variables.' });
+    return res.status(500).json({ message: 'GEMINI_API_KEY is not configured.' });
   }
 
   const genAI = new GoogleGenerativeAI(apiKey);

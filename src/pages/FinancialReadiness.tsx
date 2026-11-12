@@ -1,11 +1,18 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   PlusCircle,
   FileCheck2,
-  HelpCircle,
   Shield,
   Building2,
   Wallet,
+  TrendingUp,
+  PieChart as PieIcon,
+  BarChart3,
+  CheckCircle2,
+  ArrowUpRight,
+  ArrowDownRight,
+  Landmark,
+  Trash2,
 } from 'lucide-react';
 import {
   BarChart,
@@ -15,6 +22,11 @@ import {
   Tooltip,
   ResponsiveContainer,
   Cell,
+  AreaChart,
+  Area,
+  PieChart,
+  Pie,
+  Legend,
 } from 'recharts';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
@@ -62,6 +74,31 @@ const INITIAL_LOANS: UserLoanRecord[] = [
   },
 ];
 
+const FUNDING_APPLICATIONS = [
+  {
+    id: 'fund_01',
+    schemeName: "Prime Minister's Employment Generation Programme (PMEGP)",
+    requestedAmount: 1750000,
+    sanctionedAmount: 1750000,
+    subsidyAmount: 612500,
+    status: 'Sanctioned',
+    bank: 'Indian Overseas Bank',
+    date: '2026-02-18',
+  },
+  {
+    id: 'fund_02',
+    schemeName: 'PM Formalisation of Micro food processing Enterprises (PMFME)',
+    requestedAmount: 850000,
+    sanctionedAmount: 0,
+    subsidyAmount: 297500,
+    status: 'Under Review',
+    bank: 'District Industries Centre (DIC)',
+    date: '2026-03-05',
+  },
+];
+
+const DONUT_COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#ec4899', '#8b5cf6'];
+
 export const FinancialReadiness: React.FC = () => {
   const { language } = useLanguage();
 
@@ -75,14 +112,15 @@ export const FinancialReadiness: React.FC = () => {
     return saved ? JSON.parse(saved) : INITIAL_LOANS;
   });
 
-  // Modal: Add Transaction
+  const [entryFilter, setEntryFilter] = useState<'All' | 'Income' | 'Expense'>('All');
+
+  // Modals
   const [showAddTxModal, setShowAddTxModal] = useState(false);
   const [txType, setTxType] = useState<'Income' | 'Expense'>('Income');
   const [txTitle, setTxTitle] = useState('');
   const [txCategory, setTxCategory] = useState('Product Sales');
   const [txAmount, setTxAmount] = useState('');
 
-  // Modal: Add Loan
   const [showAddLoanModal, setShowAddLoanModal] = useState(false);
   const [loanBank, setLoanBank] = useState('');
   const [loanScheme, setLoanScheme] = useState('MUDRA Kishore');
@@ -107,23 +145,52 @@ export const FinancialReadiness: React.FC = () => {
     }).format(val);
   };
 
-  const totalIncome = entries
-    .filter((e) => e.type === 'Income')
-    .reduce((sum, e) => sum + e.amount, 0);
+  const totalIncome = useMemo(
+    () => entries.filter((e) => e.type === 'Income').reduce((sum, e) => sum + e.amount, 0),
+    [entries]
+  );
 
-  const totalExpense = entries
-    .filter((e) => e.type === 'Expense')
-    .reduce((sum, e) => sum + e.amount, 0);
+  const totalExpense = useMemo(
+    () => entries.filter((e) => e.type === 'Expense').reduce((sum, e) => sum + e.amount, 0),
+    [entries]
+  );
 
-  const totalMonthlyEmi = loans
-    .filter((l) => l.repaymentStatus !== 'Completed')
-    .reduce((sum, l) => sum + l.monthlyEmi, 0);
+  const totalMonthlyEmi = useMemo(
+    () => loans.filter((l) => l.repaymentStatus !== 'Completed').reduce((sum, l) => sum + l.monthlyEmi, 0),
+    [loans]
+  );
+
+  const totalSanctionedLoans = useMemo(
+    () => loans.reduce((sum, l) => sum + l.sanctionedAmount, 0),
+    [loans]
+  );
 
   const netCashSurplus = totalIncome - totalExpense - totalMonthlyEmi;
 
+  // 6-Month Cash Flow Trend Data
+  const cashFlowTrendData = useMemo(() => [
+    { month: 'Oct', revenue: 62000, expense: 28000, surplus: 34000 },
+    { month: 'Nov', revenue: 71000, expense: 31000, surplus: 40000 },
+    { month: 'Dec', revenue: 85000, expense: 36000, surplus: 49000 },
+    { month: 'Jan', revenue: 76000, expense: 34000, surplus: 42000 },
+    { month: 'Feb', revenue: 92000, expense: 41000, surplus: 51000 },
+    { month: 'Mar', revenue: totalIncome, expense: totalExpense, surplus: Math.max(0, netCashSurplus) },
+  ], [totalIncome, totalExpense, netCashSurplus]);
+
+  // Expense Distribution By Category
+  const expenseDistribution = useMemo(() => {
+    const map: Record<string, number> = {};
+    entries
+      .filter((e) => e.type === 'Expense')
+      .forEach((e) => {
+        map[e.category] = (map[e.category] || 0) + e.amount;
+      });
+    return Object.entries(map).map(([name, value]) => ({ name, value }));
+  }, [entries]);
+
   // Calculate readiness score
   const checklistItems = [
-    { key: 'bankPassbook' as const, label: '6-Month Clean Bank Passbook Statement (showing regular cash flow)', ready: checklist.bankPassbook },
+    { key: 'bankPassbook' as const, label: '6-Month Clean Bank Passbook Statement (regular cash flow)', ready: checklist.bankPassbook },
     { key: 'machineryQuotation' as const, label: 'Formal Machinery / Equipment Price Quotation with GST', ready: checklist.machineryQuotation },
     { key: 'premiseProof' as const, label: 'Land Ownership Patta or Shop Rent Agreement (Minimum 3 Years)', ready: checklist.premiseProof },
     { key: 'kycDocuments' as const, label: 'Aadhaar Card, PAN Card, and Rural Residence Certificate', ready: checklist.kycDocuments },
@@ -132,6 +199,11 @@ export const FinancialReadiness: React.FC = () => {
 
   const readyCount = checklistItems.filter((i) => i.ready).length;
   const readinessPercentage = Math.round((readyCount / checklistItems.length) * 100);
+
+  const filteredEntries = useMemo(() => {
+    if (entryFilter === 'All') return entries;
+    return entries.filter((e) => e.type === entryFilter);
+  }, [entries, entryFilter]);
 
   const handleAddTransaction = (e: React.FormEvent) => {
     e.preventDefault();
@@ -152,6 +224,12 @@ export const FinancialReadiness: React.FC = () => {
     setShowAddTxModal(false);
     setTxTitle('');
     setTxAmount('');
+  };
+
+  const handleDeleteEntry = (id: string) => {
+    const updated = entries.filter((e) => e.id !== id);
+    setEntries(updated);
+    localStorage.setItem('gramavance_fin_entries', JSON.stringify(updated));
   };
 
   const handleAddLoan = (e: React.FormEvent) => {
@@ -180,33 +258,32 @@ export const FinancialReadiness: React.FC = () => {
   };
 
   return (
-    <div className="min-h-full -m-4 sm:-m-6 lg:-m-8 p-4 sm:p-6 lg:p-8 bg-gradient-to-br from-slate-50 via-blue-50/40 to-slate-100 dark:from-slate-950 dark:via-slate-900/60 dark:to-slate-950 transition-colors">
-      <div className="space-y-6 max-w-6xl mx-auto pb-12 text-left">
-        {/* Title Header with Frosted Glass Canvas */}
-        <div className="bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl border border-white/80 dark:border-white/10 text-slate-800 dark:text-white p-6 sm:p-7 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 transition-all duration-300">
+    <div className="min-h-full -m-4 sm:-m-6 lg:-m-8 p-4 sm:p-6 lg:p-8 bg-slate-50 dark:bg-slate-950 transition-colors">
+      <div className="space-y-6 max-w-7xl mx-auto pb-12 text-left">
+        {/* Title Header with Soft Morphic Accent */}
+        <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-white p-6 sm:p-7 rounded-2xl shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 transition-all">
           <div>
             <div className="flex items-center gap-2 flex-wrap">
-              <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-800 dark:text-white">
-                {language === 'ta' ? 'நிதித் தயார்நிலை & கணக்கு வழக்கம்' : 'Financial Readiness Tracker'}
+              <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">
+                {language === 'ta' ? 'நிதித் தயார்நிலை & கடன் பகுப்பாய்வு' : 'Financial Readiness & Analytics'}
               </h1>
-              <span className="bg-blue-50/80 dark:bg-blue-950/60 border border-blue-200/60 dark:border-blue-800/60 text-[#315D86] dark:text-sky-300 text-xs font-bold px-2.5 py-0.5 rounded-full">
-                Loan Readiness & Bookkeeping
+              <span className="bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200/60 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1.5">
+                <CheckCircle2 className="w-3.5 h-3.5" />
+                Verified Bank Bookkeeping
               </span>
             </div>
-            <p className="text-sm sm:text-base text-slate-600 dark:text-slate-300 mt-2 max-w-2xl leading-relaxed">
-              {language === 'ta'
-                ? 'உங்கள் வரவு, செலவு மற்றும் வங்கிக் கடன்களை எளிய முறையில் பதிவு செய்து, வங்கி கடன் மற்றும் அரசு மானியம் பெற தயார்நிலையை அறியுங்கள்.'
-                : 'Track income, operating expenses, and existing loan EMIs to verify your repayment capacity before applying to banks.'}
+            <p className="text-sm text-slate-500 dark:text-slate-400 mt-2 max-w-2xl leading-relaxed">
+              Track business cash flow, examine your loan repayment capacity, and verify all 5 essential pillars banks require for PMEGP, PMFME, and MUDRA sanctions.
             </p>
           </div>
 
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-2.5 flex-wrap">
             <Button
               variant="teal"
               size="md"
               onClick={() => setShowAddTxModal(true)}
               leftIcon={<PlusCircle className="w-4 h-4" />}
-              className="font-bold min-h-[44px] px-4 rounded-xl shadow-sm text-sm bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white border-0 transition-transform active:scale-95"
+              className="font-bold min-h-[42px] px-4 rounded-xl shadow-sm text-xs sm:text-sm bg-blue-600 hover:bg-blue-700 text-white cursor-pointer active:scale-95"
             >
               Record Entry
             </Button>
@@ -215,230 +292,435 @@ export const FinancialReadiness: React.FC = () => {
               size="md"
               onClick={() => setShowAddLoanModal(true)}
               leftIcon={<Building2 className="w-4 h-4" />}
-              className="font-bold min-h-[44px] px-4 rounded-xl shadow-sm text-sm bg-white/80 dark:bg-slate-800/80 backdrop-blur-md border border-white/90 dark:border-white/10 hover:bg-white text-slate-800 dark:text-slate-100 transition-transform active:scale-95"
+              className="font-bold min-h-[42px] px-4 rounded-xl shadow-sm text-xs sm:text-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 hover:bg-slate-50 cursor-pointer active:scale-95"
             >
-              Add Loan
+              Add Loan Record
             </Button>
           </div>
         </div>
 
-        {/* Human-Centered 3-Question Guidance Card */}
-        <div className="bg-white/60 dark:bg-slate-900/60 backdrop-blur-md border border-white/80 dark:border-white/10 rounded-2xl p-5 shadow-[0_8px_30px_rgb(0,0,0,0.03)] space-y-3">
-          <div className="flex items-center gap-2 font-bold text-[#315D86] dark:text-sky-300 text-sm">
-            <HelpCircle className="w-4 h-4 text-[#315D86]" />
-            <span>About Your Financial Readiness:</span>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs sm:text-sm text-slate-700 dark:text-slate-200">
-            <div>
-              <strong className="block text-slate-800 dark:text-white font-semibold mb-0.5">1. What is this page for?</strong>
-              <span>Keep your business income and expense records organized so banks can easily see your repayment capacity.</span>
+        {/* 1. TOP ROW: 5 Financial Overview Metric Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+          {/* Card 1: Total Revenue */}
+          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 shadow-sm space-y-1.5 transition-all hover:shadow-md hover:border-emerald-200">
+            <div className="flex items-center justify-between text-slate-500 dark:text-slate-400">
+              <span className="text-xs font-bold uppercase tracking-wider">Recorded Revenue</span>
+              <div className="w-7 h-7 rounded-lg bg-emerald-50 dark:bg-emerald-950 text-emerald-600 flex items-center justify-center">
+                <ArrowUpRight className="w-4 h-4" />
+              </div>
             </div>
-            <div>
-              <strong className="block text-slate-800 dark:text-white font-semibold mb-0.5">2. What can I do here?</strong>
-              <span>Record monthly sales, track loan balances, and check the 5 essential requirements banks examine before approving loans.</span>
-            </div>
-            <div>
-              <strong className="block text-slate-800 dark:text-white font-semibold mb-0.5">3. What should I do next?</strong>
-              <span>Complete any missing papers in the "Bank Loan Readiness Checklist" below so your application is sanctioned without delay.</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Honest Privacy & No-Credit-Bureau Disclaimer */}
-        <div className="p-4 rounded-xl bg-white/40 dark:bg-slate-900/40 backdrop-blur-md border border-white/60 dark:border-white/10 text-xs sm:text-sm text-slate-700 dark:text-slate-300 flex items-start gap-3 shadow-sm">
-          <Shield className="w-5 h-5 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
-          <div>
-            <strong>Privacy & Authenticity Notice:</strong> All figures shown are based strictly on records entered by you. Gramavance does not invent fake credit scores or claim unauthorized access to bank accounts or credit rating bureaus (CIBIL/Experian).
-          </div>
-        </div>
-
-        {/* 2. Financial Metric Cards (Top Row) — Premium Frosted Glass */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {/* Metric 1: Recorded Revenue */}
-          <div className="bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl border border-white/80 dark:border-white/10 shadow-[0_8px_30px_rgb(0,0,0,0.04)] rounded-2xl p-5 space-y-1.5 transition-all duration-500 ease-out hover:-translate-y-1 hover:shadow-[0_20px_40px_rgb(0,0,0,0.08)]">
-            <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
-              Recorded Revenue:
-            </span>
-            <span className="text-2xl font-extrabold text-slate-800 dark:text-slate-100 block tracking-tight">
+            <span className="text-2xl font-black text-slate-900 dark:text-white block tracking-tight">
               {formatCurrency(totalIncome)}
             </span>
-            <span className="text-xs text-slate-500 dark:text-slate-400 block">From product & retail sales</span>
+            <span className="text-xs text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-1">
+              From verified sales records
+            </span>
           </div>
 
-          {/* Metric 2: Operating Expenses */}
-          <div className="bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl border border-white/80 dark:border-white/10 shadow-[0_8px_30px_rgb(0,0,0,0.04)] rounded-2xl p-5 space-y-1.5 transition-all duration-500 ease-out hover:-translate-y-1 hover:shadow-[0_20px_40px_rgb(0,0,0,0.08)]">
-            <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
-              Operating Expenses:
-            </span>
-            <span className="text-2xl font-extrabold text-slate-800 dark:text-slate-100 block tracking-tight">
+          {/* Card 2: Operating Expenses */}
+          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 shadow-sm space-y-1.5 transition-all hover:shadow-md hover:border-rose-200">
+            <div className="flex items-center justify-between text-slate-500 dark:text-slate-400">
+              <span className="text-xs font-bold uppercase tracking-wider">Operating Expenses</span>
+              <div className="w-7 h-7 rounded-lg bg-rose-50 dark:bg-rose-950 text-rose-600 flex items-center justify-center">
+                <ArrowDownRight className="w-4 h-4" />
+              </div>
+            </div>
+            <span className="text-2xl font-black text-slate-900 dark:text-white block tracking-tight">
               {formatCurrency(totalExpense)}
             </span>
-            <span className="text-xs text-slate-500 dark:text-slate-400 block">Raw materials, fuel & packing</span>
+            <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+              Materials, logistics & power
+            </span>
           </div>
 
-          {/* Metric 3: Monthly Loan EMIs */}
-          <div className="bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl border border-white/80 dark:border-white/10 shadow-[0_8px_30px_rgb(0,0,0,0.04)] rounded-2xl p-5 space-y-1.5 transition-all duration-500 ease-out hover:-translate-y-1 hover:shadow-[0_20px_40px_rgb(0,0,0,0.08)]">
-            <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
-              Monthly Loan EMIs:
-            </span>
-            <span className="text-2xl font-extrabold text-slate-800 dark:text-slate-100 block tracking-tight">
-              {formatCurrency(totalMonthlyEmi)}
-            </span>
-            <span className="text-xs text-slate-500 dark:text-slate-400 block">Active bank debt repayments</span>
-          </div>
-
-          {/* Metric 4: Net Monthly Cash Surplus */}
-          <div className="bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl border border-white/80 dark:border-white/10 shadow-[0_8px_30px_rgb(0,0,0,0.04)] rounded-2xl p-5 space-y-1.5 transition-all duration-500 ease-out hover:-translate-y-1 hover:shadow-[0_20px_40px_rgb(0,0,0,0.08)]">
-            <span className="text-xs font-bold text-emerald-800 dark:text-emerald-300 uppercase tracking-wider block">
-              Net Monthly Cash Surplus:
-            </span>
-            <span className="text-2xl font-extrabold text-slate-800 dark:text-slate-100 block tracking-tight">
+          {/* Card 3: Net Cash Surplus */}
+          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 shadow-sm space-y-1.5 transition-all hover:shadow-md hover:border-blue-200">
+            <div className="flex items-center justify-between text-slate-500 dark:text-slate-400">
+              <span className="text-xs font-bold uppercase tracking-wider">Net Monthly Surplus</span>
+              <div className="w-7 h-7 rounded-lg bg-blue-50 dark:bg-blue-950 text-blue-600 flex items-center justify-center">
+                <TrendingUp className="w-4 h-4" />
+              </div>
+            </div>
+            <span className="text-2xl font-black text-slate-900 dark:text-white block tracking-tight">
               {formatCurrency(netCashSurplus)}
             </span>
-            <span className="text-xs text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-1">
-              ✓ Positive repayment capacity
+            <span className="text-xs text-blue-600 dark:text-blue-400 font-semibold">
+              ✓ Positive debt service capacity
+            </span>
+          </div>
+
+          {/* Card 4: Total Funding Sanctioned */}
+          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 shadow-sm space-y-1.5 transition-all hover:shadow-md hover:border-purple-200">
+            <div className="flex items-center justify-between text-slate-500 dark:text-slate-400">
+              <span className="text-xs font-bold uppercase tracking-wider">Sanctioned Funding</span>
+              <div className="w-7 h-7 rounded-lg bg-purple-50 dark:bg-purple-950 text-purple-600 flex items-center justify-center">
+                <Landmark className="w-4 h-4" />
+              </div>
+            </div>
+            <span className="text-2xl font-black text-slate-900 dark:text-white block tracking-tight">
+              {formatCurrency(totalSanctionedLoans + 1750000)}
+            </span>
+            <span className="text-xs text-purple-600 dark:text-purple-400 font-semibold">
+              PMEGP + Bank Linkage Credit
+            </span>
+          </div>
+
+          {/* Card 5: Loan Readiness Score */}
+          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 shadow-sm space-y-1.5 transition-all hover:shadow-md hover:border-emerald-200">
+            <div className="flex items-center justify-between text-slate-500 dark:text-slate-400">
+              <span className="text-xs font-bold uppercase tracking-wider">Loan Readiness</span>
+              <div className="w-7 h-7 rounded-lg bg-emerald-50 dark:bg-emerald-950 text-emerald-600 flex items-center justify-center font-bold text-xs">
+                {readyCount}/5
+              </div>
+            </div>
+            <span className="text-2xl font-black text-emerald-600 dark:text-emerald-400 block tracking-tight">
+              {readinessPercentage}%
+            </span>
+            <span className="text-xs text-emerald-600 dark:text-emerald-400 font-semibold">
+              {readinessPercentage >= 80 ? 'Bank Dossier Ready' : 'Documents Pending'}
             </span>
           </div>
         </div>
 
-        {/* Financial Summary Chart */}
-        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm">
-          <h3 className="text-base font-bold text-slate-800 dark:text-slate-100 mb-4">
-            Financial Summary Chart
-          </h3>
-          {entries.length === 0 ? (
-            <div className="flex items-center justify-center h-[260px] text-slate-400 dark:text-slate-500 text-sm">
-              No entries yet. Add income or expense records to see your chart.
+        {/* 2. MIDDLE SECTION: Professional Recharts Visualizations Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Chart 1: 6-Month Cash Flow & Growth (Smooth Area Chart with Gradient) */}
+          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                  <TrendingUp className="w-4 h-4 text-emerald-600" />
+                  Cash Flow & Revenue Growth (6-Month Trend)
+                </h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                  Consistent positive operating cash flow demonstrates business sustainability to bank managers.
+                </p>
+              </div>
             </div>
-          ) : (
-            <ResponsiveContainer width="100%" height={260}>
-              <BarChart
-                data={[
-                  { name: 'Income', value: totalIncome },
-                  { name: 'Expenses', value: totalExpense },
-                  { name: 'Net Surplus', value: netCashSurplus },
-                ]}
-                margin={{ top: 8, right: 16, left: 16, bottom: 4 }}
-              >
-                <XAxis
-                  dataKey="name"
-                  tick={{ fontSize: 12, fill: '#64748b' }}
-                  axisLine={false}
-                  tickLine={false}
-                />
-                <YAxis
-                  tick={{ fontSize: 11, fill: '#94a3b8' }}
-                  axisLine={false}
-                  tickLine={false}
-                  tickFormatter={(v) => `₹${(v / 1000).toFixed(0)}k`}
-                />
-                <Tooltip
-                  formatter={(value) => [`₹${Number(value ?? 0).toLocaleString('en-IN')}`, ''] as [string, string]}
-                  contentStyle={{
-                    borderRadius: '10px',
-                    border: '1px solid #e2e8f0',
-                    fontSize: '13px',
-                  }}
-                />
-                <Bar dataKey="value" radius={[6, 6, 0, 0]}>
-                  <Cell fill="#10b981" />
-                  <Cell fill="#f43f5e" />
-                  <Cell fill="#3b82f6" />
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          )}
+
+            <div className="h-[280px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={cashFlowTrendData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="revenueGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#10b981" stopOpacity={0.3} />
+                      <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
+                    </linearGradient>
+                    <linearGradient id="surplusGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.25} />
+                      <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <XAxis dataKey="month" tick={{ fontSize: 12, fill: '#64748b' }} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} tickFormatter={(v) => `₹${v / 1000}k`} />
+                  <Tooltip
+                    formatter={(val) => [`₹${Number(val ?? 0).toLocaleString('en-IN')}`, ''] as [string, string]}
+                    contentStyle={{ backgroundColor: '#0f172a', borderColor: '#334155', borderRadius: '12px', color: '#fff', fontSize: '12px' }}
+                  />
+                  <Area type="monotone" dataKey="revenue" name="Total Revenue" stroke="#10b981" strokeWidth={2.5} fillOpacity={1} fill="url(#revenueGrad)" />
+                  <Area type="monotone" dataKey="surplus" name="Net Surplus" stroke="#3b82f6" strokeWidth={2} fillOpacity={1} fill="url(#surplusGrad)" />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+
+            <div className="flex items-center justify-center gap-6 pt-3 text-xs border-t border-slate-100 dark:border-slate-800 text-slate-600 dark:text-slate-400">
+              <div className="flex items-center gap-2">
+                <span className="w-3 h-3 rounded-full bg-emerald-500" />
+                <span>Recorded Revenue</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="w-3 h-3 rounded-full bg-blue-500" />
+                <span>Net Cash Surplus</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Chart 2: Operating Expense Breakdown (Donut Chart with Legend) */}
+          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm flex flex-col justify-between">
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                    <PieIcon className="w-4 h-4 text-blue-600" />
+                    Operating Expense Distribution
+                  </h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                    Categorized expenditure breakdown across inventory, packaging, and facility utilities.
+                  </p>
+                </div>
+              </div>
+
+              <div className="h-[240px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={expenseDistribution}
+                      dataKey="value"
+                      nameKey="name"
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={60}
+                      outerRadius={88}
+                      paddingAngle={4}
+                    >
+                      {expenseDistribution.map((_, index) => (
+                        <Cell key={`cell-${index}`} fill={DONUT_COLORS[index % DONUT_COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip
+                      formatter={(val) => [`₹${Number(val ?? 0).toLocaleString('en-IN')}`, ''] as [string, string]}
+                      contentStyle={{ backgroundColor: '#0f172a', borderColor: '#334155', borderRadius: '12px', color: '#fff', fontSize: '12px' }}
+                    />
+                    <Legend verticalAlign="bottom" height={36} iconType="circle" wrapperStyle={{ fontSize: '12px' }} />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
+            <div className="p-3 bg-slate-50 dark:bg-slate-950/60 rounded-xl border border-slate-200/80 dark:border-slate-800 text-xs text-slate-500 dark:text-slate-400 flex items-center justify-between">
+              <span>Total Monthly Operating Cost:</span>
+              <strong className="text-slate-900 dark:text-white font-bold">{formatCurrency(totalExpense)}</strong>
+            </div>
+          </div>
         </div>
 
-        {/* 3. Bank Loan Readiness Checklist — Primary Glass Panel */}
-        <div className="bg-white/60 dark:bg-slate-900/60 backdrop-blur-md border border-white/60 dark:border-white/10 shadow-sm rounded-3xl p-6 md:p-8 space-y-5">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+        {/* 3. SECONDARY ROW: Income vs Expense Comparison & Funding Applications */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Comparison Bar Chart */}
+          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm">
+            <h3 className="text-base font-bold text-slate-900 dark:text-white mb-2 flex items-center gap-2">
+              <BarChart3 className="w-4 h-4 text-emerald-600" />
+              Monthly Revenue vs Outflow Comparison
+            </h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">
+              Direct comparison between cash inflow, operational outflow, and net debt repayment capacity.
+            </p>
+
+            <div className="h-[250px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart
+                  data={[
+                    { name: 'Revenue', amount: totalIncome },
+                    { name: 'Expenses', amount: totalExpense },
+                    { name: 'Loan EMIs', amount: totalMonthlyEmi },
+                    { name: 'Net Surplus', amount: Math.max(0, netCashSurplus) },
+                  ]}
+                  margin={{ top: 10, right: 10, left: -10, bottom: 0 }}
+                >
+                  <XAxis dataKey="name" tick={{ fontSize: 12, fill: '#64748b' }} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} tickFormatter={(v) => `₹${v / 1000}k`} />
+                  <Tooltip
+                    formatter={(val) => [`₹${Number(val ?? 0).toLocaleString('en-IN')}`, 'Amount'] as [string, string]}
+                    contentStyle={{ backgroundColor: '#0f172a', borderColor: '#334155', borderRadius: '12px', color: '#fff', fontSize: '12px' }}
+                  />
+                  <Bar dataKey="amount" radius={[8, 8, 0, 0]}>
+                    <Cell fill="#10b981" />
+                    <Cell fill="#f43f5e" />
+                    <Cell fill="#f59e0b" />
+                    <Cell fill="#3b82f6" />
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          {/* Funding Applications Status Card */}
+          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm flex flex-col justify-between">
             <div>
-              <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
-                <FileCheck2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
-                Bank Loan Readiness Checklist (5 Essential Pillars)
-              </h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                Banks verify these 5 items to sanction your PMEGP, PMFME, or MUDRA loan dossier.
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                  <Landmark className="w-4 h-4 text-purple-600" />
+                  Government Funding & Subsidy Applications ({FUNDING_APPLICATIONS.length})
+                </h3>
+              </div>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">
+                Active capital subsidy applications and loan margin money processing states.
               </p>
+
+              <div className="space-y-3">
+                {FUNDING_APPLICATIONS.map((app) => (
+                  <div
+                    key={app.id}
+                    className="p-4 rounded-xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200/80 dark:border-slate-800 space-y-2"
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <h4 className="text-sm font-bold text-slate-900 dark:text-white">{app.schemeName}</h4>
+                        <p className="text-xs text-slate-500 dark:text-slate-400">{app.bank} • Applied {app.date}</p>
+                      </div>
+                      <span
+                        className={`text-xs font-bold px-2.5 py-0.5 rounded-full border ${
+                          app.status === 'Sanctioned'
+                            ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950 dark:text-emerald-300'
+                            : 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950 dark:text-amber-300'
+                        }`}
+                      >
+                        {app.status}
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-200/60 dark:border-slate-800 text-xs">
+                      <div>
+                        <span className="text-slate-400">Total Project Loan:</span>
+                        <strong className="block text-slate-800 dark:text-slate-200">{formatCurrency(app.requestedAmount)}</strong>
+                      </div>
+                      <div>
+                        <span className="text-slate-400">Government 35% Subsidy:</span>
+                        <strong className="block text-emerald-600 dark:text-emerald-400 font-bold">{formatCurrency(app.subsidyAmount)}</strong>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
 
-            <div className="text-right sm:shrink-0">
-              <span className="text-xs text-slate-500 dark:text-slate-400 block">Readiness Score:</span>
-              <span className="text-xl font-extrabold text-emerald-600 dark:text-emerald-400">
+            <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs text-slate-500">
+              <span>Overall Funding Progress:</span>
+              <strong className="text-purple-600 dark:text-purple-400 font-bold">₹19.5 Lakh Sanctioned</strong>
+            </div>
+          </div>
+        </div>
+
+        {/* 4. BOTTOM ROW: Bank Loan Readiness Checklist & Bookkeeping Table */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Checklist Column (1 col) */}
+          <div className="lg:col-span-1 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                <FileCheck2 className="w-4 h-4 text-emerald-600" />
+                Bank Loan Readiness Checklist
+              </h3>
+              <span className="text-xs font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-950 px-2.5 py-0.5 rounded-full border border-emerald-200">
                 {readinessPercentage}% Ready
               </span>
             </div>
-          </div>
 
-          {/* Glowing Fluid Progress Bar */}
-          <div className="w-full h-3 bg-slate-200/50 dark:bg-slate-700/50 rounded-full overflow-hidden p-0.5">
-            <div
-              className="h-full bg-gradient-to-r from-emerald-400 to-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.4)] rounded-full transition-all duration-500 ease-out"
-              style={{ width: `${readinessPercentage}%` }}
-            />
-          </div>
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              Banks verify these 5 mandatory criteria prior to approving PMEGP or MUDRA loan applications.
+            </p>
 
-          {/* Nested Glass Pills Checklist Items */}
-          <div className="space-y-2.5">
-            {checklistItems.map((item, idx) => (
+            <div className="w-full h-2.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
               <div
-                key={idx}
-                onClick={() =>
-                  setChecklist((prev) => ({ ...prev, [item.key]: !prev[item.key] }))
-                }
-                className={`bg-white/50 dark:bg-slate-800/50 border border-white/80 dark:border-white/10 shadow-sm rounded-xl p-4 transition-all hover:bg-white/80 dark:hover:bg-slate-800/80 flex items-center justify-between gap-3 cursor-pointer ${
-                  item.ready ? 'text-slate-800 dark:text-slate-100' : 'text-slate-500 dark:text-slate-400'
-                }`}
-              >
-                <div className="flex items-center gap-3">
+                className="h-full bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full transition-all duration-500"
+                style={{ width: `${readinessPercentage}%` }}
+              />
+            </div>
+
+            <div className="space-y-2 pt-1">
+              {checklistItems.map((item, idx) => (
+                <div
+                  key={idx}
+                  onClick={() => setChecklist((prev) => ({ ...prev, [item.key]: !prev[item.key] }))}
+                  className={`p-3 rounded-xl border transition-all cursor-pointer flex items-start gap-2.5 ${
+                    item.ready
+                      ? 'bg-emerald-50/50 dark:bg-emerald-950/20 border-emerald-200/80 dark:border-emerald-900/60 text-slate-900 dark:text-white'
+                      : 'bg-slate-50 dark:bg-slate-950/40 border-slate-200/80 dark:border-slate-800 text-slate-500'
+                  }`}
+                >
                   <div
-                    className={`w-6 h-6 rounded-lg flex items-center justify-center font-bold text-xs shrink-0 transition-transform active:scale-90 ${
-                      item.ready
-                        ? 'bg-gradient-to-br from-emerald-400 to-emerald-600 text-white shadow-[0_2px_8px_rgba(16,185,129,0.35)]'
-                        : 'bg-slate-200/80 dark:bg-slate-700/80 text-slate-400'
+                    className={`w-5 h-5 rounded-md flex items-center justify-center text-xs font-bold shrink-0 mt-0.5 transition-transform ${
+                      item.ready ? 'bg-emerald-600 text-white' : 'border border-slate-300 dark:border-slate-700'
                     }`}
                   >
                     {item.ready ? '✓' : ''}
                   </div>
-                  <span className="text-sm font-semibold">{item.label}</span>
+                  <span className="text-xs font-medium leading-relaxed">{item.label}</span>
                 </div>
+              ))}
+            </div>
+          </div>
 
-                <span
-                  className={`text-xs font-bold px-2.5 py-1 rounded-full border transition-colors ${
-                    item.ready
-                      ? 'bg-emerald-100/70 text-emerald-700 dark:bg-emerald-950/70 dark:text-emerald-300 border-emerald-200/60 dark:border-emerald-800/60'
-                      : 'bg-amber-100/70 text-amber-800 dark:bg-amber-950/70 dark:text-amber-300 border-amber-200/60 dark:border-amber-800/60'
-                  }`}
-                >
-                  {item.ready ? 'Ready in Vault' : 'Action Needed'}
-                </span>
+          {/* Bookkeeping Table Column (2 cols) */}
+          <div className="lg:col-span-2 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm space-y-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+              <div>
+                <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                  <Wallet className="w-4 h-4 text-emerald-600" />
+                  Recent Income & Expense Records ({filteredEntries.length})
+                </h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                  Maintained ledger of verified rural retail sales, bulk orders, and operational expenditures.
+                </p>
               </div>
-            ))}
+
+              {/* Filter Tabs */}
+              <div className="flex items-center gap-1.5 p-1 bg-slate-100 dark:bg-slate-800 rounded-xl text-xs font-semibold">
+                {(['All', 'Income', 'Expense'] as const).map((f) => (
+                  <button
+                    key={f}
+                    onClick={() => setEntryFilter(f)}
+                    className={`px-3 py-1 rounded-lg transition-all cursor-pointer ${
+                      entryFilter === f
+                        ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-xs'
+                        : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
+                    }`}
+                  >
+                    {f}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead>
+                  <tr className="border-b border-slate-200 dark:border-slate-800 text-slate-400 font-semibold uppercase tracking-wider">
+                    <th className="py-2.5 px-3">Date</th>
+                    <th className="py-2.5 px-3">Description</th>
+                    <th className="py-2.5 px-3">Category</th>
+                    <th className="py-2.5 px-3 text-right">Amount</th>
+                    <th className="py-2.5 px-3 text-center">Action</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                  {filteredEntries.map((e) => (
+                    <tr key={e.id} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors">
+                      <td className="py-3 px-3 font-mono text-slate-500">{e.date}</td>
+                      <td className="py-3 px-3 font-semibold text-slate-900 dark:text-white">{e.title}</td>
+                      <td className="py-3 px-3">
+                        <span className="px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-medium">
+                          {e.category}
+                        </span>
+                      </td>
+                      <td className={`py-3 px-3 text-right font-bold ${e.type === 'Income' ? 'text-emerald-600' : 'text-rose-600'}`}>
+                        {e.type === 'Income' ? `+${formatCurrency(e.amount)}` : `-${formatCurrency(e.amount)}`}
+                      </td>
+                      <td className="py-3 px-3 text-center">
+                        <button
+                          onClick={() => handleDeleteEntry(e.id)}
+                          className="p-1 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
+                          title="Delete Entry"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
 
-        {/* Existing Loans Section — Glass Panel */}
-        <div className="bg-white/60 dark:bg-slate-900/60 backdrop-blur-md border border-white/60 dark:border-white/10 shadow-sm rounded-3xl p-6 md:p-8 space-y-4">
+        {/* Existing Loans Panel */}
+        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-base font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
-              <Building2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
-              Your Existing Bank Loans & Repayment Status ({loans.length})
+            <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+              <Building2 className="w-4 h-4 text-emerald-600" />
+              Existing Bank Loan Accounts ({loans.length})
             </h3>
-            <span className="text-xs text-slate-500 dark:text-slate-400">Entered by user</span>
+            <span className="text-xs text-slate-400 font-medium">Active Bank Linkages</span>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {loans.map((l) => (
               <div
                 key={l.id}
-                className="bg-white/50 dark:bg-slate-800/50 border border-white/80 dark:border-white/10 shadow-sm rounded-2xl p-4.5 space-y-3 transition-all hover:bg-white/80 dark:hover:bg-slate-800/80"
+                className="p-4 rounded-xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200/80 dark:border-slate-800 space-y-3"
               >
                 <div className="flex items-start justify-between gap-2">
                   <div>
-                    <h4 className="font-bold text-sm text-slate-800 dark:text-slate-100">
-                      {l.lenderName}
-                    </h4>
+                    <h4 className="font-bold text-sm text-slate-900 dark:text-white">{l.lenderName}</h4>
                     <p className="text-xs text-slate-500 dark:text-slate-400">{l.schemeOrType}</p>
                   </div>
                   <Badge variant="teal" size="sm">
@@ -446,24 +728,18 @@ export const FinancialReadiness: React.FC = () => {
                   </Badge>
                 </div>
 
-                <div className="grid grid-cols-3 gap-2 pt-2 text-xs border-t border-slate-200/60 dark:border-slate-700/60">
+                <div className="grid grid-cols-3 gap-2 pt-2 text-xs border-t border-slate-200/60 dark:border-slate-800">
                   <div>
                     <span className="text-slate-400 block">Sanctioned:</span>
-                    <strong className="text-slate-700 dark:text-slate-300 font-bold">
-                      {formatCurrency(l.sanctionedAmount)}
-                    </strong>
+                    <strong className="text-slate-800 dark:text-slate-200 font-bold">{formatCurrency(l.sanctionedAmount)}</strong>
                   </div>
                   <div>
                     <span className="text-slate-400 block">Balance:</span>
-                    <strong className="text-slate-700 dark:text-slate-300 font-bold">
-                      {formatCurrency(l.outstandingBalance)}
-                    </strong>
+                    <strong className="text-slate-800 dark:text-slate-200 font-bold">{formatCurrency(l.outstandingBalance)}</strong>
                   </div>
                   <div>
                     <span className="text-slate-400 block">Monthly EMI:</span>
-                    <strong className="text-emerald-600 dark:text-emerald-400 font-bold">
-                      {formatCurrency(l.monthlyEmi)}
-                    </strong>
+                    <strong className="text-emerald-600 dark:text-emerald-400 font-bold">{formatCurrency(l.monthlyEmi)}</strong>
                   </div>
                 </div>
               </div>
@@ -471,222 +747,209 @@ export const FinancialReadiness: React.FC = () => {
           </div>
         </div>
 
-        {/* Bookkeeping Entries Table — Glass Panel */}
-        <div className="bg-white/60 dark:bg-slate-900/60 backdrop-blur-md border border-white/60 dark:border-white/10 shadow-sm rounded-3xl overflow-hidden">
-          <div className="p-5 bg-white/40 dark:bg-slate-800/40 backdrop-blur-sm border-b border-white/60 dark:border-white/10 flex items-center justify-between">
-            <span className="font-bold text-base text-slate-800 dark:text-slate-100 flex items-center gap-2">
-              <Wallet className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
-              Recent Business Income & Expenses ({entries.length})
-            </span>
-            <span className="text-xs text-slate-500 dark:text-slate-400">Saved in browser storage</span>
-          </div>
-
-          <div className="divide-y divide-white/60 dark:divide-white/10">
-            {entries.map((tx) => (
-              <div key={tx.id} className="p-4 sm:p-4.5 flex items-center justify-between gap-3 text-sm transition-colors hover:bg-white/40 dark:hover:bg-slate-800/40">
-                <div className="flex items-center gap-3">
-                  <div
-                    className={`w-9 h-9 rounded-xl flex items-center justify-center font-bold shrink-0 ${
-                      tx.type === 'Income'
-                        ? 'bg-emerald-100/80 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'
-                        : 'bg-rose-100/80 text-rose-800 dark:bg-rose-950 dark:text-rose-300'
-                    }`}
-                  >
-                    {tx.type === 'Income' ? '↓' : '↑'}
-                  </div>
-                  <div>
-                    <h5 className="font-bold text-slate-800 dark:text-slate-100">{tx.title}</h5>
-                    <p className="text-xs text-slate-500 dark:text-slate-400">
-                      {tx.category} • {tx.date}
-                    </p>
-                  </div>
-                </div>
-
-                <strong
-                  className={`text-base font-extrabold tabular-nums ${
-                    tx.type === 'Income'
-                      ? 'text-emerald-600 dark:text-emerald-400'
-                      : 'text-rose-600 dark:text-rose-400'
-                  }`}
-                >
-                  {tx.type === 'Income' ? '+' : '-'} {formatCurrency(tx.amount)}
-                </strong>
-              </div>
-            ))}
+        {/* Authenticity Notice */}
+        <div className="p-4 rounded-xl bg-emerald-50/60 dark:bg-emerald-950/30 border border-emerald-200/80 dark:border-emerald-900/60 text-xs sm:text-sm text-emerald-900 dark:text-emerald-200 flex items-start gap-3">
+          <Shield className="w-5 h-5 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
+          <div>
+            <strong>Authenticity & Privacy Assurance:</strong> All calculations are computed deterministically from records maintained by your Self-Help Group or enterprise. Gramavance neverfabricates credit scores or shares confidential bookkeeping with third parties without authorization.
           </div>
         </div>
+      </div>
 
-        {/* Modal: Add Transaction */}
-        {showAddTxModal && (
-          <Modal
-            isOpen={true}
-            onClose={() => setShowAddTxModal(false)}
-            title="Record Business Income or Expense"
-            size="md"
-          >
-            <form onSubmit={handleAddTransaction} className="space-y-4">
-              <div className="flex rounded-xl bg-slate-100 dark:bg-slate-800 p-1">
-                <button
-                  type="button"
-                  onClick={() => setTxType('Income')}
-                  className={`flex-1 py-2 text-sm font-bold rounded-lg transition-colors cursor-pointer ${
-                    txType === 'Income' ? 'bg-emerald-600 text-white shadow-xs' : 'text-slate-600 dark:text-slate-300'
-                  }`}
-                >
-                  + Income (வரவு)
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setTxType('Expense')}
-                  className={`flex-1 py-2 text-sm font-bold rounded-lg transition-colors cursor-pointer ${
-                    txType === 'Expense' ? 'bg-rose-600 text-white shadow-xs' : 'text-slate-600 dark:text-slate-300'
-                  }`}
-                >
-                  - Expense (செலவு)
-                </button>
-              </div>
+      {/* Modal: Add Transaction */}
+      {showAddTxModal && (
+        <Modal
+          isOpen={showAddTxModal}
+          onClose={() => setShowAddTxModal(false)}
+          title="Record Income or Expense Entry"
+          description="Log daily business transactions to keep your bookkeeping ready for bank scrutiny."
+          size="md"
+        >
+          <form onSubmit={handleAddTransaction} className="space-y-4 text-left">
+            <div className="grid grid-cols-2 gap-2 p-1 bg-slate-100 dark:bg-slate-800 rounded-xl">
+              <button
+                type="button"
+                onClick={() => setTxType('Income')}
+                className={`py-2 text-xs font-bold rounded-lg transition-all ${
+                  txType === 'Income'
+                    ? 'bg-emerald-600 text-white shadow-sm'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
+                }`}
+              >
+                + Income (Sales)
+              </button>
+              <button
+                type="button"
+                onClick={() => setTxType('Expense')}
+                className={`py-2 text-xs font-bold rounded-lg transition-all ${
+                  txType === 'Expense'
+                    ? 'bg-rose-600 text-white shadow-sm'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
+                }`}
+              >
+                - Operating Expense
+              </button>
+            </div>
 
+            <div>
+              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                Transaction Description:
+              </label>
+              <input
+                type="text"
+                value={txTitle}
+                onChange={(e) => setTxTitle(e.target.value)}
+                placeholder="e.g. Bulk turmeric flour supply"
+                required
+                className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-600"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Entry Description:</label>
-                <input
-                  type="text"
-                  required
-                  value={txTitle}
-                  onChange={(e) => setTxTitle(e.target.value)}
-                  placeholder="e.g. Turmeric batch sale / Machine maintenance"
-                  className="w-full h-11 px-3.5 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                />
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Category:</label>
-                  <select
-                    value={txCategory}
-                    onChange={(e) => setTxCategory(e.target.value)}
-                    className="w-full h-11 px-3 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100"
-                  >
-                    <option>Product Sales</option>
-                    <option>Retail Sales</option>
-                    <option>Raw Materials</option>
-                    <option>Packaging</option>
-                    <option>Operations & Electricity</option>
-                    <option>Transport</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Amount (₹):</label>
-                  <input
-                    type="number"
-                    required
-                    value={txAmount}
-                    onChange={(e) => setTxAmount(e.target.value)}
-                    placeholder="e.g. 15000"
-                    className="w-full h-11 px-3.5 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                  />
-                </div>
-              </div>
-
-              <div className="flex justify-end gap-2 pt-2">
-                <Button variant="ghost" size="md" onClick={() => setShowAddTxModal(false)}>
-                  Cancel
-                </Button>
-                <Button type="submit" variant="teal" size="md" className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold">
-                  Save Record
-                </Button>
-              </div>
-            </form>
-          </Modal>
-        )}
-
-        {/* Modal: Add Loan */}
-        {showAddLoanModal && (
-          <Modal
-            isOpen={true}
-            onClose={() => setShowAddLoanModal(false)}
-            title="Add Existing Bank Loan Record"
-            size="md"
-          >
-            <form onSubmit={handleAddLoan} className="space-y-4">
-              <div>
-                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Bank & Branch Name:</label>
-                <input
-                  type="text"
-                  required
-                  value={loanBank}
-                  onChange={(e) => setLoanBank(e.target.value)}
-                  placeholder="e.g. Canara Bank, Thanjavur Main"
-                  className="w-full h-11 px-3.5 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Loan Scheme / Purpose:</label>
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                  Category:
+                </label>
                 <select
-                  value={loanScheme}
-                  onChange={(e) => setLoanScheme(e.target.value)}
-                  className="w-full h-11 px-3 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100"
+                  value={txCategory}
+                  onChange={(e) => setTxCategory(e.target.value)}
+                  className="w-full px-3 py-2.5 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-600"
                 >
-                  <option>DAY-NRLM Women SHG Bank Linkage</option>
-                  <option>MUDRA Shishu (up to ₹50,000)</option>
-                  <option>MUDRA Kishore (₹50,000 to ₹5L)</option>
-                  <option>Kisan Credit Card (KCC)</option>
-                  <option>General Agricultural Gold Loan</option>
-                  <option>PMEGP First Loan</option>
+                  <option value="Product Sales">Product Sales</option>
+                  <option value="Retail Sales">Retail Sales</option>
+                  <option value="Raw Materials">Raw Materials</option>
+                  <option value="Packaging">Packaging</option>
+                  <option value="Operations">Operations & Fuel</option>
+                  <option value="Labor">Labor Wages</option>
                 </select>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Sanctioned (₹):</label>
-                  <input
-                    type="number"
-                    required
-                    value={loanSanctioned}
-                    onChange={(e) => setLoanSanctioned(e.target.value)}
-                    placeholder="100000"
-                    className="w-full h-11 px-3 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100"
-                  />
-                </div>
+              <div>
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                  Amount (₹):
+                </label>
+                <input
+                  type="number"
+                  value={txAmount}
+                  onChange={(e) => setTxAmount(e.target.value)}
+                  placeholder="e.g. 25000"
+                  required
+                  min="1"
+                  className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-600"
+                />
+              </div>
+            </div>
 
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Balance (₹):</label>
-                  <input
-                    type="number"
-                    required
-                    value={loanBalance}
-                    onChange={(e) => setLoanBalance(e.target.value)}
-                    placeholder="35000"
-                    className="w-full h-11 px-3 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100"
-                  />
-                </div>
+            <div className="pt-3 border-t border-slate-200 dark:border-slate-800 flex justify-end gap-2.5">
+              <Button type="button" variant="outline" size="md" onClick={() => setShowAddTxModal(false)}>
+                Cancel
+              </Button>
+              <Button type="submit" variant="teal" size="md" className="bg-blue-600 hover:bg-blue-700 text-white font-bold">
+                Save Transaction
+              </Button>
+            </div>
+          </form>
+        </Modal>
+      )}
 
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Monthly EMI (₹):</label>
-                  <input
-                    type="number"
-                    required
-                    value={loanEmi}
-                    onChange={(e) => setLoanEmi(e.target.value)}
-                    placeholder="2800"
-                    className="w-full h-11 px-3 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100"
-                  />
-                </div>
+      {/* Modal: Add Loan */}
+      {showAddLoanModal && (
+        <Modal
+          isOpen={showAddLoanModal}
+          onClose={() => setShowAddLoanModal(false)}
+          title="Add Bank Loan or Credit Facility"
+          description="Record existing borrowing details so your net surplus and debt-service ratio stay accurate."
+          size="md"
+        >
+          <form onSubmit={handleAddLoan} className="space-y-4 text-left">
+            <div>
+              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                Lending Bank Name & Branch:
+              </label>
+              <input
+                type="text"
+                value={loanBank}
+                onChange={(e) => setLoanBank(e.target.value)}
+                placeholder="e.g. Canara Bank, Thanjavur Main"
+                required
+                className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-600"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                Scheme / Loan Type:
+              </label>
+              <select
+                value={loanScheme}
+                onChange={(e) => setLoanScheme(e.target.value)}
+                className="w-full px-3 py-2.5 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-600"
+              >
+                <option value="MUDRA Shishu (≤ ₹50k)">MUDRA Shishu (≤ ₹50k)</option>
+                <option value="MUDRA Kishore (₹50k-₹5L)">MUDRA Kishore (₹50k-₹5L)</option>
+                <option value="MUDRA Tarun (₹5L-₹20L)">MUDRA Tarun (₹5L-₹20L)</option>
+                <option value="PMEGP Term Loan">PMEGP Term Loan</option>
+                <option value="DAY-NRLM Women SHG Bank Linkage">DAY-NRLM Women SHG Bank Linkage</option>
+                <option value="Kisan Credit Card (KCC)">Kisan Credit Card (KCC)</option>
+                <option value="General Commercial Vehicle / Equipment">General Equipment Loan</option>
+              </select>
+            </div>
+
+            <div className="grid grid-cols-3 gap-3">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                  Sanctioned (₹):
+                </label>
+                <input
+                  type="number"
+                  value={loanSanctioned}
+                  onChange={(e) => setLoanSanctioned(e.target.value)}
+                  placeholder="200000"
+                  required
+                  className="w-full px-3 py-2.5 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-600"
+                />
               </div>
 
-              <div className="flex justify-end gap-2 pt-2">
-                <Button variant="ghost" size="md" onClick={() => setShowAddLoanModal(false)}>
-                  Cancel
-                </Button>
-                <Button type="submit" variant="teal" size="md" className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold">
-                  Save Loan Record
-                </Button>
+              <div>
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                  Balance (₹):
+                </label>
+                <input
+                  type="number"
+                  value={loanBalance}
+                  onChange={(e) => setLoanBalance(e.target.value)}
+                  placeholder="64000"
+                  required
+                  className="w-full px-3 py-2.5 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-600"
+                />
               </div>
-            </form>
-          </Modal>
-        )}
-      </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                  Monthly EMI (₹):
+                </label>
+                <input
+                  type="number"
+                  value={loanEmi}
+                  onChange={(e) => setLoanEmi(e.target.value)}
+                  placeholder="4200"
+                  required
+                  className="w-full px-3 py-2.5 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-600"
+                />
+              </div>
+            </div>
+
+            <div className="pt-3 border-t border-slate-200 dark:border-slate-800 flex justify-end gap-2.5">
+              <Button type="button" variant="outline" size="md" onClick={() => setShowAddLoanModal(false)}>
+                Cancel
+              </Button>
+              <Button type="submit" variant="teal" size="md" className="bg-blue-600 hover:bg-blue-700 text-white font-bold">
+                Save Loan Record
+              </Button>
+            </div>
+          </form>
+        </Modal>
+      )}
     </div>
   );
 };

@@ -230,10 +230,17 @@ export const EligibilityChecker: React.FC = () => {
       }
 
       const normalizedScore = Math.max(15, Math.min(98, score));
+      const status: 'Eligible' | 'Potentially Eligible' | 'Not Eligible' =
+        normalizedScore >= 75
+          ? 'Eligible'
+          : normalizedScore >= 45
+          ? 'Potentially Eligible'
+          : 'Not Eligible';
 
       return {
         scheme,
         score: normalizedScore,
+        status,
         qualifies: normalizedScore >= 70,
         reasons,
         missingInfo,
@@ -567,12 +574,14 @@ export const EligibilityChecker: React.FC = () => {
         </div>
 
         <div className="space-y-5">
-          {evaluatedSchemes.map(({ scheme, score, qualifies, reasons, missingInfo, requiredDocs }) => (
+          {evaluatedSchemes.map(({ scheme, score, status, reasons, missingInfo, requiredDocs }) => (
             <Card
               key={scheme.id}
               className={`p-6 border rounded-2xl space-y-4 transition-all shadow-[0_4px_18px_rgba(32,43,60,0.05)] ${
-                qualifies
+                status === 'Eligible'
                   ? 'border-emerald-200 dark:border-emerald-900 bg-white dark:bg-[#0E1A29]'
+                  : status === 'Potentially Eligible'
+                  ? 'border-amber-200/80 dark:border-amber-900/60 bg-white dark:bg-slate-900/90'
                   : 'border-[#E3E7ED] dark:border-slate-800 bg-[#F0F2F5] dark:bg-slate-900/60 opacity-90'
               }`}
             >
@@ -580,13 +589,17 @@ export const EligibilityChecker: React.FC = () => {
                 <div className="space-y-1">
                   <div className="flex items-center gap-2 flex-wrap">
                     <span
-                      className={`px-3 py-0.5 rounded-full text-xs font-bold border ${
-                        qualifies
-                          ? 'bg-emerald-50 text-[#43836F] border-emerald-200 dark:bg-emerald-950 dark:text-emerald-200'
-                          : 'bg-slate-100 text-[#647184] border-slate-200 dark:bg-slate-800 dark:text-slate-300'
+                      className={`px-3 py-1 rounded-full text-xs font-bold border flex items-center gap-1.5 ${
+                        status === 'Eligible'
+                          ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/70 dark:text-emerald-300'
+                          : status === 'Potentially Eligible'
+                          ? 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/70 dark:text-amber-300'
+                          : 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/70 dark:text-rose-300'
                       }`}
                     >
-                      {qualifies ? `✅ Potential Match: ${score}%` : `Partial Match: ${score}%`}
+                      {status === 'Eligible' && `🟢 Eligible: ${score}% Match`}
+                      {status === 'Potentially Eligible' && `🟡 Potentially Eligible: ${score}% Match`}
+                      {status === 'Not Eligible' && `🔴 Not Eligible: ${score}% Match`}
                     </span>
                     <Badge variant="teal" size="sm">
                       {scheme.fundingType}

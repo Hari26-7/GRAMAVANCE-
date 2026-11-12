@@ -120,7 +120,10 @@ const CATEGORIES: { id: string; label: string }[] = [
 
 export const DocumentVault: React.FC = () => {
   const { language } = useLanguage();
-  const [documents, setDocuments] = useState<VaultDocument[]>(INITIAL_DOCS);
+  const [documents, setDocuments] = useState<VaultDocument[]>(() => {
+    const saved = localStorage.getItem('gramavance_vault_docs');
+    return saved ? JSON.parse(saved) : INITIAL_DOCS;
+  });
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [selectedDoc, setSelectedDoc] = useState<VaultDocument | null>(null);
   const [isUploading, setIsUploading] = useState(false);
@@ -133,7 +136,9 @@ export const DocumentVault: React.FC = () => {
 
   const confirmDelete = () => {
     if (docToDelete) {
-      setDocuments(documents.filter((d) => d.id !== docToDelete.id));
+      const updated = documents.filter((d) => d.id !== docToDelete.id);
+      setDocuments(updated);
+      localStorage.setItem('gramavance_vault_docs', JSON.stringify(updated));
       if (selectedDoc?.id === docToDelete.id) setSelectedDoc(null);
       setDocToDelete(null);
     }
@@ -180,7 +185,9 @@ export const DocumentVault: React.FC = () => {
           'Confidence Rating': '94% clarity rating',
         },
       };
-      setDocuments([newDoc, ...documents]);
+      const updated = [newDoc, ...documents];
+      setDocuments(updated);
+      localStorage.setItem('gramavance_vault_docs', JSON.stringify(updated));
       setIsUploading(false);
     }, 1000);
   };
