@@ -36,6 +36,13 @@ export default defineConfig(({ mode }) => {
                     return
                   }
 
+                  if (!apiKey) {
+                    res.statusCode = 500
+                    res.setHeader('Content-Type', 'application/json')
+                    res.end(JSON.stringify({ message: 'GEMINI_API_KEY is not configured in .env' }))
+                    return
+                  }
+
                   const genAI = new GoogleGenerativeAI(apiKey)
                   const MODELS = ['gemini-3.8-flash', 'gemini-3.5-flash', 'gemini-3.5-flash-lite']
                   let reply = ''
