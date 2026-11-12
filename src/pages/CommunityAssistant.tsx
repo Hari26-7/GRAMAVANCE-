@@ -2,16 +2,9 @@ import GramavanceChat from '../components/GramavanceChat';
 
 export default function CommunityAssistant() {
   return (
-    <div className="flex flex-col h-[calc(100vh-8rem)] w-full max-w-6xl mx-auto p-4 md:p-6">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Gramavance Copilot</h1>
-        <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
-          Your dedicated Generative AI assistant for grants, subsidies, and community development.
-        </p>
-      </div>
-
-      {/* Chat Container taking remaining height */}
-      <div className="flex-1 min-h-0 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm rounded-2xl overflow-hidden">
+    <div className="w-full h-[calc(100vh-7rem)] sm:h-[calc(100vh-7.5rem)] lg:h-[calc(100vh-8rem)] flex flex-col -my-2 sm:-my-3">
+      {/* SaaS Chat Shell with Glassmorphic Backdrop */}
+      <div className="flex-1 min-h-0 bg-white dark:bg-slate-900/90 border border-slate-200/90 dark:border-slate-800 shadow-lg rounded-2xl overflow-hidden flex flex-col transition-colors">
         <GramavanceChat />
       </div>
     </div>
