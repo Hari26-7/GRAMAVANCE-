@@ -11,7 +11,6 @@ import {
   ArrowRight,
   Sparkles,
 } from 'lucide-react';
-import GramavanceChat from '../components/GramavanceChat';
 import { useLanguage } from '../context/LanguageContext';
 import { VERIFIED_SCHEMES, MOCK_APPLICATIONS } from '../data/mockData';
 
@@ -162,24 +161,6 @@ export const Dashboard: React.FC = () => {
             />
             <div className="absolute inset-0 bg-gradient-to-r from-white dark:from-slate-900 via-white/20 dark:via-slate-900/20 to-transparent pointer-events-none" />
           </div>
-        </div>
-
-        {/* Gramavance AI Serverless Live Assistant */}
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
-                <span>Gramavance AI Live Assistant</span>
-                <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400 border border-blue-200/60 dark:border-blue-800">
-                  Vercel Serverless
-                </span>
-              </h2>
-              <p className="text-sm text-slate-500 dark:text-slate-400">
-                Ask step-by-step questions about government grants, subsidy stacking, and financial readiness.
-              </p>
-            </div>
-          </div>
-          <GramavanceChat />
         </div>
 
         {/* 2. Three Action Cards (Crisp, Tactile SaaS Grid) */}
