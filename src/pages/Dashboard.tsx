@@ -65,6 +65,7 @@ export const Dashboard: React.FC = () => {
           : 'Discover capital subsidies, low-interest bank loans, and machinery support for your rural business.',
       icon: Landmark,
       route: '/schemes',
+      aiAssisted: true,
     },
     {
       id: 'srv_applications',
@@ -75,6 +76,7 @@ export const Dashboard: React.FC = () => {
           : 'Monitor submission milestones, bank review stages, and identify any missing papers immediately.',
       icon: FileCheck2,
       route: '/applications',
+      aiAssisted: false,
     },
     {
       id: 'srv_vault',
@@ -85,6 +87,7 @@ export const Dashboard: React.FC = () => {
           : 'Securely organize your Aadhaar, bank passbook, and land patta for instant, pre-filled scheme forms.',
       icon: FolderLock,
       route: '/documents',
+      aiAssisted: false,
     },
   ];
 
@@ -190,8 +193,13 @@ export const Dashboard: React.FC = () => {
                     </div>
 
                     {/* Title */}
-                    <h3 className="text-lg font-bold text-slate-900 dark:text-white mt-4 tracking-tight">
+                    <h3 className="text-lg font-bold text-slate-900 dark:text-white mt-4 tracking-tight flex items-center gap-2 flex-wrap">
                       {card.title}
+                      {card.aiAssisted && (
+                        <span className="bg-indigo-50 text-indigo-600 text-xs rounded-full px-2 py-0.5 border border-indigo-100 font-semibold">
+                          AI Assisted
+                        </span>
+                      )}
                     </h3>
 
                     {/* Description */}

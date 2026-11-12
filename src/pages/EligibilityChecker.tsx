@@ -688,15 +688,23 @@ export const EligibilityChecker: React.FC = () => {
                   </Button>
                 </div>
 
-                <a
-                  href={scheme.officialPortalUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-[#315D86] hover:bg-[#26496B] text-white transition-all active:scale-95 shadow-2xs"
-                >
-                  <span>Official Application Portal</span>
-                  <ExternalLink className="w-3.5 h-3.5" />
-                </a>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => navigate(`/schemes?search=${scheme.slug}`)}
+                    className="text-xs font-semibold rounded-xl"
+                  >
+                    View Full Details
+                  </Button>
+                  <button
+                    onClick={() => window.open(scheme.officialPortalUrl, '_blank')}
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-[#315D86] hover:bg-[#26496B] text-white transition-all active:scale-95 shadow-2xs"
+                  >
+                    <span>Apply Now</span>
+                    <ExternalLink className="w-3.5 h-3.5" />
+                  </button>
+                </div>
               </div>
             </Card>
           ))}

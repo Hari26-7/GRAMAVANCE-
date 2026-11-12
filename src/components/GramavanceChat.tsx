@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import MarkdownRenderer from './MarkdownRenderer';
 
 export default function GramavanceChat() {
   const [input, setInput] = useState('');
@@ -58,13 +59,17 @@ export default function GramavanceChat() {
         {messages.map((msg, i) => (
           <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
             <div
-              className={`max-w-[85%] rounded-lg px-4 py-3 text-sm whitespace-pre-wrap ${
+              className={`max-w-[85%] rounded-lg px-4 py-3 text-sm ${
                 msg.role === 'user'
-                  ? 'bg-blue-600 text-white shadow-sm'
+                  ? 'bg-blue-600 text-white shadow-sm whitespace-pre-wrap'
                   : 'bg-white border border-slate-200 text-slate-800 shadow-sm'
               }`}
             >
-              {msg.text}
+              {msg.role === 'ai' ? (
+                <MarkdownRenderer text={msg.text} />
+              ) : (
+                msg.text
+              )}
             </div>
           </div>
         ))}

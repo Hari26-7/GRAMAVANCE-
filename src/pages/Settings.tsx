@@ -276,6 +276,14 @@ export const Settings: React.FC = () => {
           </p>
 
           <div className="space-y-3">
+            {/* Quick AI Key Setup info card */}
+            <div className="bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 rounded-xl p-4 text-sm text-blue-800 dark:text-blue-200 flex items-start gap-2.5">
+              <CheckCircle2 className="w-5 h-5 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
+              <span>
+                For this exam demo, your Gramavance AI assistant uses a secure Vercel serverless backend. No API key entry needed in the app — the key is securely stored server-side.
+              </span>
+            </div>
+
             <label className="font-bold block text-sm text-[#172B3A] dark:text-slate-200 flex items-center justify-between">
               <span className="flex items-center gap-1.5">
                 <Key className="w-4 h-4 text-emerald-600" />

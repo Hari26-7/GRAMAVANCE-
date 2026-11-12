@@ -7,6 +7,15 @@ import {
   Building2,
   Wallet,
 } from 'lucide-react';
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  Cell,
+} from 'recharts';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
 import { Modal } from '../components/ui/Modal';
@@ -290,6 +299,55 @@ export const FinancialReadiness: React.FC = () => {
               ✓ Positive repayment capacity
             </span>
           </div>
+        </div>
+
+        {/* Financial Summary Chart */}
+        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm">
+          <h3 className="text-base font-bold text-slate-800 dark:text-slate-100 mb-4">
+            Financial Summary Chart
+          </h3>
+          {entries.length === 0 ? (
+            <div className="flex items-center justify-center h-[260px] text-slate-400 dark:text-slate-500 text-sm">
+              No entries yet. Add income or expense records to see your chart.
+            </div>
+          ) : (
+            <ResponsiveContainer width="100%" height={260}>
+              <BarChart
+                data={[
+                  { name: 'Income', value: totalIncome },
+                  { name: 'Expenses', value: totalExpense },
+                  { name: 'Net Surplus', value: netCashSurplus },
+                ]}
+                margin={{ top: 8, right: 16, left: 16, bottom: 4 }}
+              >
+                <XAxis
+                  dataKey="name"
+                  tick={{ fontSize: 12, fill: '#64748b' }}
+                  axisLine={false}
+                  tickLine={false}
+                />
+                <YAxis
+                  tick={{ fontSize: 11, fill: '#94a3b8' }}
+                  axisLine={false}
+                  tickLine={false}
+                  tickFormatter={(v) => `₹${(v / 1000).toFixed(0)}k`}
+                />
+                <Tooltip
+                  formatter={(value) => [`₹${Number(value ?? 0).toLocaleString('en-IN')}`, ''] as [string, string]}
+                  contentStyle={{
+                    borderRadius: '10px',
+                    border: '1px solid #e2e8f0',
+                    fontSize: '13px',
+                  }}
+                />
+                <Bar dataKey="value" radius={[6, 6, 0, 0]}>
+                  <Cell fill="#10b981" />
+                  <Cell fill="#f43f5e" />
+                  <Cell fill="#3b82f6" />
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          )}
         </div>
 
         {/* 3. Bank Loan Readiness Checklist — Primary Glass Panel */}

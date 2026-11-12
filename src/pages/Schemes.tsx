@@ -301,6 +301,15 @@ export const Schemes: React.FC = () => {
 
       {/* Scheme Cards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {filteredSchemes.length === 0 && (
+          <div className="col-span-full text-center py-16 text-slate-500">
+            <p className="text-lg font-semibold">No schemes match your filters</p>
+            <p className="text-sm mt-1">Try adjusting your category or search term</p>
+            <button onClick={() => { setSearchTerm(''); setSelectedCategory('All'); setSelectedFundingType('All'); }} className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700">
+              Clear Filters
+            </button>
+          </div>
+        )}
         {filteredSchemes.map((scheme) => {
           const isSaved = savedSchemeIds.includes(scheme.id);
           const isComparing = compareSchemeIds.includes(scheme.id);

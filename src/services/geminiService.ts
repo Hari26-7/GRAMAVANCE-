@@ -47,10 +47,9 @@ Verified Scheme Facts:
 - Essential Documents: Aadhaar Card, Bank Passbook, Machinery/Shop Quotation, Land Patta or Rent Agreement.`;
 
 const CANDIDATE_MODELS = [
+  'gemini-3.8-flash',
   'gemini-3.5-flash',
   'gemini-3.5-flash-lite',
-  'gemini-3.8-flash',
-  'gemini-2.5-flash',
 ];
 
 export const getGeminiApiKey = (): string => {
