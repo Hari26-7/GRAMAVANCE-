@@ -258,3 +258,4 @@ export const ChatComposer: React.FC<ChatComposerProps> = ({
 };
 
 export default ChatComposer;
+

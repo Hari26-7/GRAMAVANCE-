@@ -1,7 +1,7 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
-// Working model priority list — tested against this API key
-const MODELS = ["gemini-3.8-flash", "gemini-3.5-flash"];
+// Working model priority list with multi-tier fallback
+const MODELS = ["gemini-3.8-flash", "gemini-3.5-flash", "gemini-3.5-flash-lite"];
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -42,11 +42,8 @@ export default async function handler(req, res) {
       return res.status(200).json({ text: text.trim() });
     } catch (error) {
       lastError = error?.message || 'Unknown error';
-      console.error(`[Gramavance AI] Error with model ${modelName}:`, lastError);
-      // Try next model on 404 (not found) or 503 (unavailable)
-      if (!lastError.includes('404') && !lastError.includes('503')) {
-        break;
-      }
+      console.warn(`[Gramavance AI] Candidate model ${modelName} failed, trying next:`, lastError);
+      continue;
     }
   }
 
