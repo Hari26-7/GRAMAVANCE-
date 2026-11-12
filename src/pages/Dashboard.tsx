@@ -38,7 +38,7 @@ export const Dashboard: React.FC = () => {
         langCode = 'hi-IN';
       } else {
         text =
-          'Vanakkam! Welcome to Gramavance. We help you find government support and grow your business. What would you like help with today? Please select any option below.';
+          'Vanakkam! Welcome to Gramavance AI. We help you find government support and grow your business. What would you like help with today? Please select any option below.';
         langCode = 'en-IN';
       }
 
@@ -114,8 +114,8 @@ export const Dashboard: React.FC = () => {
 
             <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white tracking-tight leading-tight">
               {language === 'ta'
-                ? 'வணக்கம்! கிராமாவான்ஸ் தங்களுக்கு நல்வரவு கூறுகிறது.'
-                : 'Vanakkam! Welcome to Gramavance.'}
+                ? 'வணக்கம்! கிராமாவான்ஸ் AI தங்களுக்கு நல்வரவு கூறுகிறது.'
+                : 'Vanakkam! Welcome to Gramavance AI.'}
             </h1>
 
             <p className="text-sm sm:text-base text-slate-500 dark:text-slate-400 mt-2 max-w-xl leading-relaxed">

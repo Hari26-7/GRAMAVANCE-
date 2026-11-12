@@ -7,14 +7,14 @@ interface Translations {
 
 export const translations: Translations = {
   appName: {
-    en: 'Gramavance',
-    ta: 'கிராமாவான்ஸ்',
-    hi: 'ग्रामावांस',
+    en: 'Gramavance AI',
+    ta: 'கிராமாவான்ஸ் AI',
+    hi: 'ग्रामावांस AI',
   },
   tagline: {
-    en: 'Grow Together',
-    ta: 'ஒன்றாக வளர்வோம்',
-    hi: 'साथ मिलकर आगे बढ़ें',
+    en: 'Intelligent Community Platform',
+    ta: 'அறிவார்ந்த சமூக தளம்',
+    hi: 'बुद्धिमान सामुदायिक मंच',
   },
   searchPlaceholder: {
     en: 'Search schemes, products, or solutions...',
@@ -117,9 +117,9 @@ export const translations: Translations = {
     hi: 'सूचनाएं और रिमाइंडर',
   },
   welcomeHeading: {
-    en: 'Vanakkam! Welcome to Gramavance.',
-    ta: 'வணக்கம்! கிராமாவான்ஸ்-க்கு நல்வரவு.',
-    hi: 'नमस्ते! ग्रामावांस में आपका स्वागत है।',
+    en: 'Vanakkam! Welcome to Gramavance AI.',
+    ta: 'வணக்கம்! கிராமாவான்ஸ் AI-க்கு நல்வரவு.',
+    hi: 'नमस्ते! ग्रामावांस AI में आपका स्वागत है।',
   },
   welcomeSubheading: {
     en: 'We help you find government support, manage your documents, and grow your business.',

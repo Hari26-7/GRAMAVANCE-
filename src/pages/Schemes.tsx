@@ -567,7 +567,7 @@ export const Schemes: React.FC = () => {
                 onClick={() => {
                   const slug = selectedScheme.slug;
                   setSelectedScheme(null);
-                  navigate(`/grant-intelligence?scheme=${slug}`);
+                  navigate(`/eligibility?scheme=${slug}`);
                 }}
                 className="w-full sm:w-auto bg-[#159B68] hover:bg-emerald-700 text-white font-bold min-h-[48px] px-6 rounded-xl"
               >

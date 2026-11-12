@@ -206,7 +206,10 @@ export const CommunityNetwork: React.FC = () => {
   const [newOrgName, setNewOrgName] = useState('');
   const [newCategory, setNewCategory] = useState('Food Processing');
   const [newDesc, setNewDesc] = useState('');
-  const [profiles, setProfiles] = useState<CommunityProfile[]>(INITIAL_PROFILES);
+  const [profiles, setProfiles] = useState<CommunityProfile[]>(() => {
+    const saved = localStorage.getItem('gramavance_community_profiles');
+    return saved ? JSON.parse(saved) : INITIAL_PROFILES;
+  });
 
   const filteredProfiles = profiles.filter((p) => {
     const matchesSearch =
@@ -251,7 +254,11 @@ export const CommunityNetwork: React.FC = () => {
       isVerified: false,
       joinedDate: new Date().toISOString().split('T')[0],
     };
-    setProfiles((prev) => [newProf, ...prev]);
+    setProfiles((prev) => {
+      const updated = [newProf, ...prev];
+      localStorage.setItem('gramavance_community_profiles', JSON.stringify(updated));
+      return updated;
+    });
     setShowJoinModal(false);
     setNewOrgName('');
     setNewDesc('');

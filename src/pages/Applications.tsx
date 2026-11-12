@@ -89,7 +89,7 @@ export const Applications: React.FC = () => {
   const handleDownloadDossier = () => {
     if (!selectedApp) return;
     setDownloadSuccess(true);
-    const content = `GRAMAVANCE - APPLICATION ACKNOWLEDGEMENT\nDate: ${new Date().toLocaleDateString()}\n\nScheme: ${selectedApp.schemeTitle}\nApplication Number: ${selectedApp.applicationNumber}\nPlatform Status: ${selectedApp.status}\nRequested Amount: ₹${selectedApp.requestedAmount}\nTarget Deadline: ${selectedApp.targetDeadline}\nNodal Office: ${selectedApp.nodalOffice}\nOfficer Phone: ${selectedApp.nodalContactPhone || '1800-3000-0034'}\nNotes: ${selectedApp.notes}\n\nNotice: Platform-maintained tracking status for educational record. For verified status, contact the nodal office.`;
+    const content = `GRAMAVANCE AI - APPLICATION ACKNOWLEDGEMENT & STATUS REPORT\nDate: ${new Date().toLocaleDateString()}\n\nScheme: ${selectedApp.schemeTitle}\nApplication Number: ${selectedApp.applicationNumber}\nPlatform Status: ${selectedApp.status}\nRequested Amount: ₹${selectedApp.requestedAmount}\nTarget Deadline: ${selectedApp.targetDeadline}\nNodal Office: ${selectedApp.nodalOffice}\nOfficer Phone: ${selectedApp.nodalContactPhone || '1800-3000-0034'}\nNotes: ${selectedApp.notes}\n\nNotice: Platform-maintained tracking status for educational record. For verified status, contact the nodal office.`;
     const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');

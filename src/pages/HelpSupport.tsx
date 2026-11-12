@@ -23,8 +23,8 @@ const FAQS = [
     a: 'Under schemes like PMEGP, rural women and backward classes only need to pay 5% of the total project cost. For example, for a ₹2,00,000 project, you only need to pay ₹10,000.',
   },
   {
-    q: 'Does Gramavance take any fee or cut from my subsidy?',
-    a: 'NEVER! Gramavance is completely free. Government subsidy money is sent 100% directly into your own bank account through Direct Benefit Transfer (DBT). Beware of anyone asking for a bribe or commission.',
+    q: 'Does Gramavance AI take any fee or cut from my subsidy?',
+    a: 'NEVER! Gramavance AI is completely free. Government subsidy money is sent 100% directly into your own bank account through Direct Benefit Transfer (DBT). Beware of anyone asking for a bribe or commission.',
   },
 ];
 
