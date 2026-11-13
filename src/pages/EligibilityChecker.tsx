@@ -17,7 +17,9 @@ import {
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
+import { Modal } from '../components/ui/Modal';
 import { VERIFIED_SCHEMES } from '../data/mockData';
+import type { Scheme } from '../types';
 import { useLanguage } from '../context/LanguageContext';
 
 export const EligibilityChecker: React.FC = () => {
@@ -52,6 +54,7 @@ export const EligibilityChecker: React.FC = () => {
 
   // Active step in the wizard: 1 to 5 (or 6 for full results)
   const [currentStep, setCurrentStep] = useState<number>(1);
+  const [detailsScheme, setDetailsScheme] = useState<Scheme | null>(null);
 
   // States list
   const INDIAN_STATES = [
@@ -705,14 +708,14 @@ export const EligibilityChecker: React.FC = () => {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => navigate(`/schemes?search=${scheme.slug}`)}
-                    className="text-xs font-semibold rounded-xl"
+                    onClick={() => setDetailsScheme(scheme)}
+                    className="text-xs font-semibold rounded-xl cursor-pointer"
                   >
                     View Full Details
                   </Button>
                   <button
                     onClick={() => window.open(scheme.officialPortalUrl, '_blank')}
-                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-[#315D86] hover:bg-[#26496B] text-white transition-all active:scale-95 shadow-2xs"
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-[#315D86] hover:bg-[#26496B] text-white transition-all active:scale-95 shadow-2xs cursor-pointer"
                   >
                     <span>Apply Now</span>
                     <ExternalLink className="w-3.5 h-3.5" />
@@ -723,6 +726,99 @@ export const EligibilityChecker: React.FC = () => {
           ))}
         </div>
       </div>
+
+      {/* Scheme Quick Inspection Modal */}
+      {detailsScheme && (
+        <Modal
+          isOpen={!!detailsScheme}
+          onClose={() => setDetailsScheme(null)}
+          title={detailsScheme.title[language] || detailsScheme.title.en}
+          description={`${detailsScheme.ministry} • ${detailsScheme.department}`}
+          size="lg"
+          footer={
+            <div className="w-full flex flex-col sm:flex-row items-center justify-between gap-3">
+              <Button
+                variant="outline"
+                size="md"
+                onClick={() => setDetailsScheme(null)}
+                className="w-full sm:w-auto rounded-xl min-h-[42px] px-5 font-semibold text-slate-700 dark:text-slate-200 cursor-pointer"
+              >
+                Close
+              </Button>
+              <div className="flex flex-col sm:flex-row items-center gap-2.5 w-full sm:w-auto">
+                <Button
+                  variant="outline"
+                  size="md"
+                  onClick={() => {
+                    const slug = detailsScheme.slug;
+                    setDetailsScheme(null);
+                    navigate(`/schemes?scheme=${slug}`);
+                  }}
+                  className="w-full sm:w-auto text-xs font-semibold rounded-xl min-h-[42px] cursor-pointer"
+                >
+                  View in Schemes Catalog
+                </Button>
+                <a
+                  href={detailsScheme.officialPortalUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-5 py-2.5 rounded-xl text-xs font-bold bg-[#159B68] hover:bg-emerald-700 text-white transition-all shadow-xs cursor-pointer"
+                >
+                  <span>Apply on Official Portal</span>
+                  <ExternalLink className="w-3.5 h-3.5" />
+                </a>
+              </div>
+            </div>
+          }
+        >
+          <div className="space-y-4 text-left">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 p-4 bg-[#F4F9F6] dark:bg-slate-800 rounded-xl border border-emerald-100 dark:border-slate-700">
+              <div>
+                <span className="text-xs text-slate-500 block">Subsidy Rate</span>
+                <strong className="text-lg text-[#159B68] font-bold">
+                  {detailsScheme.subsidyPercentage > 0
+                    ? `${detailsScheme.subsidyPercentage}%`
+                    : 'Low Interest'}
+                </strong>
+              </div>
+              <div>
+                <span className="text-xs text-slate-500 block">Max Support</span>
+                <strong className="text-lg text-[#102D46] dark:text-slate-100 font-bold">
+                  ₹{Number(detailsScheme.maxSubsidyAmount || detailsScheme.maxProjectCost).toLocaleString('en-IN')}
+                </strong>
+              </div>
+              <div>
+                <span className="text-xs text-slate-500 block">Self Margin</span>
+                <strong className="text-lg text-slate-700 dark:text-slate-300 font-bold">
+                  {detailsScheme.promoterContributionMin}%
+                </strong>
+              </div>
+            </div>
+
+            <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800 text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
+              {detailsScheme.shortDescription[language] || detailsScheme.shortDescription.en}
+            </div>
+
+            <div className="space-y-2">
+              <h4 className="font-bold text-xs uppercase tracking-wider text-slate-500">Eligibility Highlights:</h4>
+              <ul className="text-xs space-y-1.5 text-slate-600 dark:text-slate-300">
+                <li className="flex items-center gap-2">
+                  <span className="text-emerald-600 font-bold">✓</span>
+                  <span><strong>Target Applicant:</strong> {detailsScheme.applicantTypes.join(', ')}</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className="text-emerald-600 font-bold">✓</span>
+                  <span><strong>Eligible Sectors:</strong> {detailsScheme.businessCategories.join(', ')}</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className="text-emerald-600 font-bold">✓</span>
+                  <span><strong>Funding Type:</strong> {detailsScheme.fundingType} (Min. {detailsScheme.promoterContributionMin}% Own Contribution)</span>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </Modal>
+      )}
     </div>
   );
 };

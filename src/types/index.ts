@@ -98,6 +98,7 @@ export interface BusinessConnection {
   status: 'Pending' | 'Active' | 'Delivered' | 'Scheduled';
   date: string;
   verifiedPartner: boolean;
+  partnerPhone?: string;
 }
 
 export interface FinancialMetric {

@@ -219,21 +219,8 @@ export const AdminPortal: React.FC = () => {
           title={`KYC Inspection: ${selectedOrg.name}`}
           description={`${selectedOrg.type} • ${selectedOrg.district}`}
           size="md"
-        >
-          <div className="space-y-4 text-left">
-            <div className="p-4 bg-[#F0F2F5] dark:bg-slate-800 rounded-xl space-y-2 text-xs sm:text-sm">
-              <p>
-                <strong>Group Summary:</strong> {selectedOrg.details}
-              </p>
-              <p>
-                <strong>Member Count:</strong> {selectedOrg.members} registered beneficiaries
-              </p>
-              <p>
-                <strong>Submitted Proof:</strong> {selectedOrg.bankStatus}
-              </p>
-            </div>
-
-            <div className="pt-3 border-t border-[#E3E7ED] dark:border-slate-800 flex justify-end gap-3">
+          footer={
+            <div className="w-full flex items-center justify-between gap-3">
               <Button
                 variant="outline"
                 size="md"
@@ -250,6 +237,20 @@ export const AdminPortal: React.FC = () => {
               >
                 Approve Organization
               </Button>
+            </div>
+          }
+        >
+          <div className="space-y-4 text-left">
+            <div className="p-4 bg-[#F0F2F5] dark:bg-slate-800 rounded-xl space-y-2 text-xs sm:text-sm">
+              <p>
+                <strong>Group Summary:</strong> {selectedOrg.details}
+              </p>
+              <p>
+                <strong>Member Count:</strong> {selectedOrg.members} registered beneficiaries
+              </p>
+              <p>
+                <strong>Submitted Proof:</strong> {selectedOrg.bankStatus}
+              </p>
             </div>
           </div>
         </Modal>

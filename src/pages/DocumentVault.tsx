@@ -483,12 +483,8 @@ export const DocumentVault: React.FC = () => {
           title="Remove Document?"
           description="Are you sure you want to remove this paper from your vault?"
           size="sm"
-        >
-          <div className="space-y-4 text-left">
-            <p className="text-sm text-slate-600 dark:text-slate-300">
-              You are removing <strong>{docToDelete.title}</strong> ({docToDelete.fileName}). You can always take a new photo or upload it again later.
-            </p>
-            <div className="pt-3 border-t border-slate-200 dark:border-slate-800 flex justify-end gap-3">
+          footer={
+            <div className="w-full flex justify-end gap-3">
               <Button
                 variant="outline"
                 size="md"
@@ -506,6 +502,12 @@ export const DocumentVault: React.FC = () => {
                 Yes, Remove Document
               </Button>
             </div>
+          }
+        >
+          <div className="text-left">
+            <p className="text-sm text-slate-600 dark:text-slate-300">
+              You are removing <strong>{docToDelete.title}</strong> ({docToDelete.fileName}). You can always take a new photo or upload it again later.
+            </p>
           </div>
         </Modal>
       )}
@@ -521,18 +523,52 @@ export const DocumentVault: React.FC = () => {
           title={selectedDoc.title}
           description={`Saved file: ${selectedDoc.fileName} (${selectedDoc.fileSize})`}
           size="md"
+          footer={
+            <div className="w-full flex items-center justify-between gap-3">
+              <Button
+                variant="outline"
+                size="md"
+                onClick={() => {
+                  setSelectedDoc(null);
+                  setShowTechnicalDetails(false);
+                }}
+                className="rounded-xl min-h-[42px] px-4 font-semibold text-slate-700 dark:text-slate-200 cursor-pointer"
+              >
+                Close
+              </Button>
+
+              <div className="flex items-center gap-2">
+                {autofillSuccess && (
+                  <span className="text-xs sm:text-sm font-bold text-emerald-600 flex items-center gap-1.5">
+                    <Check className="w-4 h-4" /> Confirmed!
+                  </span>
+                )}
+                <Button
+                  variant="teal"
+                  size="md"
+                  onClick={() => {
+                    setAutofillSuccess(true);
+                    setTimeout(() => setAutofillSuccess(false), 3000);
+                  }}
+                  className="bg-[#159B68] hover:bg-emerald-700 text-white font-bold px-5 rounded-xl min-h-[42px] cursor-pointer"
+                >
+                  Confirm Information
+                </Button>
+              </div>
+            </div>
+          }
         >
-          <div className="space-y-5 text-base text-left">
+          <div className="space-y-4 text-base text-left">
             <div className="p-4 bg-[#F4F9F6] dark:bg-slate-800 rounded-2xl border border-emerald-100 dark:border-slate-700 space-y-3">
               <h4 className="font-bold text-[#102D46] dark:text-slate-100 text-base flex items-center gap-2">
                 <CheckCircle2 className="w-5 h-5 text-[#159B68]" />
                 Information read from this paper:
               </h4>
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-slate-500 dark:text-slate-400">
                 This information will automatically fill your application forms so you do not have to type it.
               </p>
 
-              <div className="space-y-2 pt-2">
+              <div className="space-y-2 pt-1">
                 {Object.entries(selectedDoc.extractedFields).map(([label, value]) => (
                   <div
                     key={label}
@@ -575,30 +611,6 @@ export const DocumentVault: React.FC = () => {
                   </p>
                 </div>
               )}
-            </div>
-
-            {/* Actions */}
-            <div className="pt-4 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between gap-3">
-              {autofillSuccess ? (
-                <span className="text-sm font-bold text-emerald-600 flex items-center gap-1.5">
-                  <Check className="w-5 h-5" /> Information Confirmed for Forms!
-                </span>
-              ) : (
-                <span className="text-xs text-slate-500">
-                  Ready to auto-fill government forms
-                </span>
-              )}
-              <Button
-                variant="teal"
-                size="md"
-                onClick={() => {
-                  setAutofillSuccess(true);
-                  setTimeout(() => setAutofillSuccess(false), 3000);
-                }}
-                className="bg-[#159B68] hover:bg-emerald-700 text-white font-bold px-5 rounded-xl min-h-[44px]"
-              >
-                Confirm Information
-              </Button>
             </div>
           </div>
         </Modal>

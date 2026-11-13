@@ -169,6 +169,9 @@ export const LocalMarketplace: React.FC = () => {
     return saved ? JSON.parse(saved) : INITIAL_ENQUIRIES;
   });
 
+  // Modal: View Product Details
+  const [selectedProductDetails, setSelectedProductDetails] = useState<MarketplaceProduct | null>(null);
+
   // Modal: Add Product
   const [showAddProductModal, setShowAddProductModal] = useState(false);
   const [newTitle, setNewTitle] = useState('');
@@ -443,15 +446,23 @@ export const LocalMarketplace: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="pt-3 border-t border-slate-100 dark:border-slate-800">
+                <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="md"
+                    onClick={() => setSelectedProductDetails(p)}
+                    className="flex-1 rounded-xl min-h-[44px] text-xs font-bold"
+                  >
+                    View Details
+                  </Button>
                   <Button
                     variant="teal"
                     size="md"
                     onClick={() => setEnquiringProduct(p)}
                     leftIcon={<Send className="w-4 h-4" />}
-                    className="w-full bg-[#159B68] hover:bg-emerald-700 text-white font-bold rounded-xl min-h-[44px]"
+                    className="flex-1 bg-[#159B68] hover:bg-emerald-700 text-white font-bold rounded-xl min-h-[44px] text-xs"
                   >
-                    Send Purchase Enquiry
+                    Send Enquiry
                   </Button>
                 </div>
               </Card>
@@ -516,8 +527,24 @@ export const LocalMarketplace: React.FC = () => {
           onClose={() => setShowAddProductModal(false)}
           title="List a Product on Local Marketplace"
           size="md"
+          footer={
+            <div className="w-full flex items-center justify-end gap-3">
+              <Button variant="outline" size="md" onClick={() => setShowAddProductModal(false)}>
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                form="add-marketplace-product-form"
+                variant="teal"
+                size="md"
+                className="bg-[#159B68] text-white font-bold"
+              >
+                Publish Product
+              </Button>
+            </div>
+          }
         >
-          <form onSubmit={handleAddProduct} className="space-y-4">
+          <form id="add-marketplace-product-form" onSubmit={handleAddProduct} className="space-y-4">
             <div>
               <label className="block text-xs font-bold text-slate-700 mb-1">
                 Product Title (பொருளின் பெயர்):
@@ -595,16 +622,95 @@ export const LocalMarketplace: React.FC = () => {
                 className="w-full p-3 text-sm rounded-xl border border-slate-200 focus:outline-none focus:border-[#159B68]"
               />
             </div>
+          </form>
+        </Modal>
+      )}
 
-            <div className="flex justify-end gap-2 pt-2">
-              <Button variant="ghost" size="md" onClick={() => setShowAddProductModal(false)}>
-                Cancel
+      {/* Modal: View Product Details */}
+      {selectedProductDetails && (
+        <Modal
+          isOpen={true}
+          onClose={() => setSelectedProductDetails(null)}
+          title={selectedProductDetails.name}
+          description={`Producer: ${selectedProductDetails.producerName} (${selectedProductDetails.producerType})`}
+          size="md"
+          footer={
+            <div className="w-full flex items-center justify-between gap-3">
+              <Button
+                variant="outline"
+                size="md"
+                onClick={() => setSelectedProductDetails(null)}
+                className="min-h-[44px]"
+              >
+                Close
               </Button>
-              <Button type="submit" variant="teal" size="md" className="bg-[#159B68] text-white font-bold">
-                Publish Product
+              <Button
+                variant="teal"
+                size="md"
+                onClick={() => {
+                  const target = selectedProductDetails;
+                  setSelectedProductDetails(null);
+                  setEnquiringProduct(target);
+                }}
+                leftIcon={<Send className="w-4 h-4" />}
+                className="min-h-[44px] bg-[#159B68] text-white font-bold"
+              >
+                Send Purchase Enquiry
               </Button>
             </div>
-          </form>
+          }
+        >
+          <div className="space-y-4 text-left">
+            <div className="flex items-center gap-3 p-4 bg-slate-50 dark:bg-slate-800/80 rounded-2xl border border-slate-200 dark:border-slate-700">
+              <span className="text-4xl p-2 rounded-xl bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600">
+                {selectedProductDetails.photoEmoji}
+              </span>
+              <div>
+                <div className="flex items-center gap-2">
+                  <Badge variant="teal" size="sm">
+                    {selectedProductDetails.category}
+                  </Badge>
+                  {selectedProductDetails.isOrganic && (
+                    <span className="text-xs font-bold text-emerald-800 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-950 px-2 py-0.5 rounded-md">
+                      🌱 Organic Certified
+                    </span>
+                  )}
+                </div>
+                <h3 className="text-base font-bold text-slate-900 dark:text-white mt-1">
+                  {selectedProductDetails.name}
+                </h3>
+              </div>
+            </div>
+
+            <div className="p-4 rounded-xl bg-[#F4F9F6] dark:bg-slate-800/60 border border-emerald-100 dark:border-slate-700 grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+              <div>
+                <span className="text-slate-500 block">Wholesale Price:</span>
+                <strong className="text-sm text-[#159B68] block font-bold">{selectedProductDetails.unitPrice}</strong>
+              </div>
+              <div>
+                <span className="text-slate-500 block">Minimum Order:</span>
+                <strong className="text-sm text-slate-800 dark:text-slate-200 block font-bold">{selectedProductDetails.minOrder}</strong>
+              </div>
+              <div>
+                <span className="text-slate-500 block">Monthly Capacity:</span>
+                <strong className="text-sm text-slate-800 dark:text-slate-200 block font-bold">{selectedProductDetails.availableQuantity}</strong>
+              </div>
+            </div>
+
+            <div>
+              <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1">
+                Product Description & Quality Standards
+              </span>
+              <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed bg-white dark:bg-slate-900 p-3 rounded-xl border border-slate-200 dark:border-slate-800">
+                {selectedProductDetails.description}
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2 text-xs text-slate-500">
+              <MapPin className="w-4 h-4 text-emerald-600 shrink-0" />
+              <span>Location: <strong>{selectedProductDetails.district}, {selectedProductDetails.state}</strong></span>
+            </div>
+          </div>
         </Modal>
       )}
 
@@ -615,6 +721,29 @@ export const LocalMarketplace: React.FC = () => {
           onClose={() => setEnquiringProduct(null)}
           title={`Enquire for: ${enquiringProduct.name}`}
           size="md"
+          footer={
+            <div className="w-full flex items-center justify-end gap-3">
+              <Button
+                variant="outline"
+                size="md"
+                onClick={() => setEnquiringProduct(null)}
+                className="min-h-[44px]"
+              >
+                Cancel
+              </Button>
+              {!enquirySuccess && (
+                <Button
+                  type="submit"
+                  form="send-marketplace-enquiry-form"
+                  variant="teal"
+                  size="md"
+                  className="min-h-[44px] bg-[#159B68] text-white font-bold"
+                >
+                  Send Enquiry
+                </Button>
+              )}
+            </div>
+          }
         >
           {enquirySuccess ? (
             <div className="p-6 text-center space-y-3">
@@ -625,7 +754,7 @@ export const LocalMarketplace: React.FC = () => {
               </p>
             </div>
           ) : (
-            <form onSubmit={handleSendEnquiry} className="space-y-4">
+            <form id="send-marketplace-enquiry-form" onSubmit={handleSendEnquiry} className="space-y-4">
               <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800 text-xs text-slate-600 dark:text-slate-300">
                 Producer: <strong>{enquiringProduct.producerName}</strong> • Price: <strong>{enquiringProduct.unitPrice}</strong> • Min Order: {enquiringProduct.minOrder}
               </div>
@@ -676,15 +805,6 @@ export const LocalMarketplace: React.FC = () => {
                   placeholder="Any packaging or sample requirements..."
                   className="w-full p-3 text-sm rounded-xl border border-slate-200 focus:outline-none focus:border-[#159B68]"
                 />
-              </div>
-
-              <div className="flex justify-end gap-2 pt-2">
-                <Button variant="ghost" size="md" onClick={() => setEnquiringProduct(null)}>
-                  Cancel
-                </Button>
-                <Button type="submit" variant="teal" size="md" className="bg-[#159B68] text-white font-bold">
-                  Send Enquiry
-                </Button>
               </div>
             </form>
           )}

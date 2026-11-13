@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   Search,
   ExternalLink,
@@ -21,7 +21,7 @@ import { Card } from '../components/ui/Card';
 import { Badge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
 import { Modal } from '../components/ui/Modal';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 
 const BUSINESS_CATEGORIES = [
   { id: 'All', labelEn: 'All Schemes', labelTa: 'அனைத்து திட்டங்கள்', icon: '🌟' },
@@ -35,6 +35,7 @@ const BUSINESS_CATEGORIES = [
 export const Schemes: React.FC = () => {
   const { language } = useLanguage();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedFundingType, setSelectedFundingType] = useState<string>('All');
@@ -45,10 +46,43 @@ export const Schemes: React.FC = () => {
     const saved = localStorage.getItem('gramavance_saved_schemes');
     return saved ? JSON.parse(saved) : ['sch_pmfme_02'];
   });
-  const [selectedScheme, setSelectedScheme] = useState<Scheme | null>(null);
+  const [selectedScheme, setSelectedScheme] = useState<Scheme | null>(() => {
+    if (typeof window === 'undefined') return null;
+    const query = new URLSearchParams(window.location.search).get('search') || new URLSearchParams(window.location.search).get('scheme');
+    if (!query) return null;
+    const qLower = query.toLowerCase();
+    return (
+      VERIFIED_SCHEMES.find(
+        (s) =>
+          s.slug.toLowerCase() === qLower ||
+          s.id.toLowerCase() === qLower ||
+          s.slug.toLowerCase().includes(qLower)
+      ) ?? null
+    );
+  });
   const [showAdvancedInModal, setShowAdvancedInModal] = useState(false);
   const [compareSchemeIds, setCompareSchemeIds] = useState<string[]>([]);
   const [showCompareModal, setShowCompareModal] = useState(false);
+
+  // Auto-detect and open scheme if query param changes dynamically
+  useEffect(() => {
+    const query = searchParams.get('search') || searchParams.get('scheme');
+    if (query) {
+      const qLower = query.toLowerCase();
+      const matched = VERIFIED_SCHEMES.find(
+        (s) =>
+          s.slug.toLowerCase() === qLower ||
+          s.id.toLowerCase() === qLower ||
+          s.slug.toLowerCase().includes(qLower)
+      );
+      if (matched) {
+        // oxlint-disable-next-line react/set-state-in-effect
+        setSelectedScheme((prev) => (prev?.id === matched.id ? prev : matched));
+      } else {
+        setSearchTerm((prev) => (prev === query ? prev : query));
+      }
+    }
+  }, [searchParams]);
 
   const toggleSaveScheme = (id: string) => {
     setSavedSchemeIds((prev) => {
@@ -407,7 +441,7 @@ export const Schemes: React.FC = () => {
                   onClick={() => setSelectedScheme(scheme)}
                   className="w-full sm:w-auto flex-1 min-h-[44px] text-sm font-semibold rounded-xl"
                 >
-                  See Details
+                  View Details
                 </Button>
                 <Button
                   variant="teal"
@@ -435,6 +469,44 @@ export const Schemes: React.FC = () => {
           title={selectedScheme.title[language] || selectedScheme.title.en}
           description={`${selectedScheme.ministry} • ${selectedScheme.department}`}
           size="lg"
+          footer={
+            <div className="w-full flex flex-col sm:flex-row items-center justify-between gap-3">
+              <Button
+                variant="outline"
+                size="md"
+                onClick={() => {
+                  setSelectedScheme(null);
+                  setShowAdvancedInModal(false);
+                }}
+                className="w-full sm:w-auto rounded-xl min-h-[42px] px-5 font-semibold text-slate-700 dark:text-slate-200 cursor-pointer"
+              >
+                Close
+              </Button>
+
+              <div className="flex flex-col sm:flex-row items-center gap-2.5 w-full sm:w-auto">
+                <a
+                  href={selectedScheme.officialPortalUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs sm:text-sm text-[#102D46] dark:text-teal-400 font-semibold hover:underline flex items-center gap-1 py-1"
+                >
+                  Visit Official Portal <ExternalLink className="w-3.5 h-3.5" />
+                </a>
+                <Button
+                  variant="teal"
+                  size="md"
+                  onClick={() => {
+                    const slug = selectedScheme.slug;
+                    setSelectedScheme(null);
+                    navigate(`/eligibility?scheme=${slug}`);
+                  }}
+                  className="w-full sm:w-auto bg-[#159B68] hover:bg-emerald-700 text-white font-bold min-h-[42px] px-5 rounded-xl cursor-pointer"
+                >
+                  Check If I Qualify →
+                </Button>
+              </div>
+            </div>
+          }
         >
           <div className="space-y-5 text-base text-left">
             {/* Quick Summary Strip */}
@@ -550,30 +622,6 @@ export const Schemes: React.FC = () => {
                 </div>
               )}
             </div>
-
-            {/* Footer with Actions */}
-            <div className="pt-4 border-t border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3">
-              <a
-                href={selectedScheme.officialPortalUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-sm text-[#102D46] dark:text-teal-400 font-semibold hover:underline flex items-center gap-1"
-              >
-                Visit Official Government Portal <ExternalLink className="w-4 h-4" />
-              </a>
-              <Button
-                variant="teal"
-                size="lg"
-                onClick={() => {
-                  const slug = selectedScheme.slug;
-                  setSelectedScheme(null);
-                  navigate(`/eligibility?scheme=${slug}`);
-                }}
-                className="w-full sm:w-auto bg-[#159B68] hover:bg-emerald-700 text-white font-bold min-h-[48px] px-6 rounded-xl"
-              >
-                Check If I Qualify (Step-by-Step)
-              </Button>
-            </div>
           </div>
         </Modal>
       )}
@@ -586,6 +634,29 @@ export const Schemes: React.FC = () => {
           title="Compare Government Schemes"
           description="Side-by-side comparison of benefits, funding amounts, and required contributions."
           size="xl"
+          footer={
+            <div className="w-full flex items-center justify-between gap-3">
+              <Button
+                variant="outline"
+                size="md"
+                onClick={() => {
+                  setCompareSchemeIds([]);
+                  setShowCompareModal(false);
+                }}
+                className="cursor-pointer font-semibold rounded-xl text-slate-700 dark:text-slate-200"
+              >
+                Clear Selection
+              </Button>
+              <Button
+                variant="teal"
+                size="md"
+                onClick={() => setShowCompareModal(false)}
+                className="bg-[#159B68] hover:bg-emerald-700 text-white font-bold cursor-pointer rounded-xl px-6"
+              >
+                Close Comparison
+              </Button>
+            </div>
+          }
         >
           <div className="overflow-x-auto text-left">
             <table className="w-full text-left text-sm border-collapse">
@@ -651,26 +722,6 @@ export const Schemes: React.FC = () => {
                 </tr>
               </tbody>
             </table>
-          </div>
-          <div className="mt-4 pt-3 border-t border-slate-200 dark:border-slate-800 flex justify-end gap-3">
-            <Button
-              variant="outline"
-              size="md"
-              onClick={() => {
-                setCompareSchemeIds([]);
-                setShowCompareModal(false);
-              }}
-            >
-              Clear Comparison
-            </Button>
-            <Button
-              variant="teal"
-              size="md"
-              onClick={() => setShowCompareModal(false)}
-              className="bg-[#159B68] text-white"
-            >
-              Done
-            </Button>
           </div>
         </Modal>
       )}

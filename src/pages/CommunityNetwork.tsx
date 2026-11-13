@@ -194,6 +194,7 @@ export const CommunityNetwork: React.FC = () => {
   const [selectedType, setSelectedType] = useState<string>('All');
 
   // Modals state
+  const [selectedProfileDetails, setSelectedProfileDetails] = useState<CommunityProfile | null>(null);
   const [connectingProfile, setConnectingProfile] = useState<CommunityProfile | null>(null);
   const [connectionMessage, setConnectionMessage] = useState('');
   const [connectionSuccess, setConnectionSuccess] = useState(false);
@@ -452,15 +453,25 @@ export const CommunityNetwork: React.FC = () => {
                     <Flag className="w-3.5 h-3.5" /> Report
                   </button>
 
-                  <Button
-                    variant="teal"
-                    size="sm"
-                    onClick={() => setConnectingProfile(prof)}
-                    leftIcon={<Handshake className="w-4 h-4" />}
-                    className="bg-[#159B68] hover:bg-emerald-700 text-white font-semibold rounded-xl text-xs px-4 min-h-[38px]"
-                  >
-                    Connect
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setSelectedProfileDetails(prof)}
+                      className="rounded-xl text-xs px-3 min-h-[38px] font-semibold"
+                    >
+                      View Details
+                    </Button>
+                    <Button
+                      variant="teal"
+                      size="sm"
+                      onClick={() => setConnectingProfile(prof)}
+                      leftIcon={<Handshake className="w-4 h-4" />}
+                      className="bg-[#159B68] hover:bg-emerald-700 text-white font-semibold rounded-xl text-xs px-4 min-h-[38px]"
+                    >
+                      Connect
+                    </Button>
+                  </div>
                 </div>
               </Card>
             ))}
@@ -595,6 +606,85 @@ export const CommunityNetwork: React.FC = () => {
         </div>
       )}
 
+      {/* Profile Details Inspection Modal */}
+      {selectedProfileDetails && (
+        <Modal
+          isOpen={true}
+          onClose={() => setSelectedProfileDetails(null)}
+          title={selectedProfileDetails.name}
+          description={`${selectedProfileDetails.category} • ${selectedProfileDetails.district}, ${selectedProfileDetails.state}`}
+          size="md"
+          footer={
+            <div className="w-full flex items-center justify-between gap-3">
+              <Button
+                variant="outline"
+                size="md"
+                onClick={() => setSelectedProfileDetails(null)}
+                className="min-h-[44px]"
+              >
+                Close
+              </Button>
+              <Button
+                variant="teal"
+                size="md"
+                onClick={() => {
+                  const target = selectedProfileDetails;
+                  setSelectedProfileDetails(null);
+                  setConnectingProfile(target);
+                }}
+                leftIcon={<Handshake className="w-4 h-4" />}
+                className="min-h-[44px] bg-[#159B68] text-white font-bold"
+              >
+                Connect With Enterprise
+              </Button>
+            </div>
+          }
+        >
+          <div className="space-y-4 text-left">
+            <div className="flex items-center justify-between gap-2 p-3 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
+              <div className="flex items-center gap-2">
+                <Badge variant="teal" size="sm">
+                  {selectedProfileDetails.type.toUpperCase()}
+                </Badge>
+                {selectedProfileDetails.isVerified && (
+                  <span className="text-xs font-bold text-emerald-800 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-950 px-2.5 py-0.5 rounded-full flex items-center gap-1">
+                    <CheckCircle2 className="w-3.5 h-3.5" /> Verified Enterprise
+                  </span>
+                )}
+              </div>
+              <span className="text-xs text-slate-400">Joined {selectedProfileDetails.joinedDate}</span>
+            </div>
+
+            <div>
+              <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1">
+                Enterprise Profile & Activities
+              </span>
+              <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed bg-white dark:bg-slate-900 p-3.5 rounded-xl border border-slate-200 dark:border-slate-800">
+                {selectedProfileDetails.description}
+              </p>
+            </div>
+
+            {selectedProfileDetails.products && selectedProfileDetails.products.length > 0 && (
+              <div>
+                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1.5">
+                  Key Products & Specialities
+                </span>
+                <div className="flex flex-wrap gap-1.5">
+                  {selectedProfileDetails.products.map((prod, idx) => (
+                    <span
+                      key={idx}
+                      className="text-xs font-semibold px-2.5 py-1 bg-emerald-50 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 rounded-lg border border-emerald-200 dark:border-emerald-800"
+                    >
+                      {prod}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </Modal>
+      )}
+
       {/* Connection Request Modal */}
       {connectingProfile && (
         <Modal
@@ -602,6 +692,25 @@ export const CommunityNetwork: React.FC = () => {
           onClose={() => setConnectingProfile(null)}
           title={`Connect with ${connectingProfile.name}`}
           size="md"
+          footer={
+            <div className="w-full flex items-center justify-end gap-3">
+              <Button variant="outline" size="md" onClick={() => setConnectingProfile(null)}>
+                Cancel
+              </Button>
+              {!connectionSuccess && (
+                <Button
+                  type="submit"
+                  form="send-community-connection-form"
+                  variant="teal"
+                  size="md"
+                  leftIcon={<Send className="w-4 h-4" />}
+                  className="bg-[#159B68] hover:bg-emerald-700 text-white font-bold"
+                >
+                  Send Request
+                </Button>
+              )}
+            </div>
+          }
         >
           {connectionSuccess ? (
             <div className="p-6 text-center space-y-3">
@@ -612,7 +721,7 @@ export const CommunityNetwork: React.FC = () => {
               </p>
             </div>
           ) : (
-            <form onSubmit={handleSendConnection} className="space-y-4">
+            <form id="send-community-connection-form" onSubmit={handleSendConnection} className="space-y-4">
               <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800 text-xs text-slate-600 dark:text-slate-300">
                 You are connecting as: <strong>{user.fullName}</strong> ({user.organizationName || 'Individual'}) • {user.district}
               </div>
@@ -642,21 +751,6 @@ export const CommunityNetwork: React.FC = () => {
                   className="w-full p-3 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 focus:outline-none focus:border-[#159B68]"
                 />
               </div>
-
-              <div className="flex items-center justify-end gap-2 pt-2">
-                <Button variant="ghost" size="md" onClick={() => setConnectingProfile(null)}>
-                  Cancel
-                </Button>
-                <Button
-                  type="submit"
-                  variant="teal"
-                  size="md"
-                  leftIcon={<Send className="w-4 h-4" />}
-                  className="bg-[#159B68] hover:bg-emerald-700 text-white font-bold"
-                >
-                  Send Request
-                </Button>
-              </div>
             </form>
           )}
         </Modal>
@@ -669,6 +763,24 @@ export const CommunityNetwork: React.FC = () => {
           onClose={() => setReportingItem(null)}
           title={`Report: ${reportingItem.name}`}
           size="sm"
+          footer={
+            <div className="w-full flex items-center justify-end gap-3">
+              <Button variant="outline" size="sm" onClick={() => setReportingItem(null)}>
+                Cancel
+              </Button>
+              {!reportSuccess && (
+                <Button
+                  type="submit"
+                  form="submit-report-form"
+                  variant="outline"
+                  size="sm"
+                  className="text-rose-600 border-rose-300 font-bold"
+                >
+                  Submit Report
+                </Button>
+              )}
+            </div>
+          }
         >
           {reportSuccess ? (
             <div className="p-4 text-center space-y-2">
@@ -679,7 +791,7 @@ export const CommunityNetwork: React.FC = () => {
               </p>
             </div>
           ) : (
-            <form onSubmit={handleSendReport} className="space-y-4">
+            <form id="submit-report-form" onSubmit={handleSendReport} className="space-y-4">
               <p className="text-xs text-slate-600">
                 Please let us know why this profile requires verification check:
               </p>
@@ -695,14 +807,6 @@ export const CommunityNetwork: React.FC = () => {
                   <option>Commercial spam</option>
                 </select>
               </div>
-              <div className="flex justify-end gap-2 pt-2">
-                <Button variant="ghost" size="sm" onClick={() => setReportingItem(null)}>
-                  Cancel
-                </Button>
-                <Button type="submit" variant="outline" size="sm" className="text-rose-600 border-rose-300">
-                  Submit Report
-                </Button>
-              </div>
             </form>
           )}
         </Modal>
@@ -715,8 +819,24 @@ export const CommunityNetwork: React.FC = () => {
           onClose={() => setShowJoinModal(false)}
           title="Join Community Directory"
           size="md"
+          footer={
+            <div className="w-full flex items-center justify-end gap-3">
+              <Button variant="outline" size="md" onClick={() => setShowJoinModal(false)}>
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                form="join-community-directory-form"
+                variant="teal"
+                size="md"
+                className="bg-[#159B68] text-white font-bold"
+              >
+                Publish My Profile
+              </Button>
+            </div>
+          }
         >
-          <form onSubmit={handleJoinDirectory} className="space-y-4">
+          <form id="join-community-directory-form" onSubmit={handleJoinDirectory} className="space-y-4">
             <div>
               <label className="block text-xs font-bold text-slate-700 mb-1">
                 SHG / Group / Business Name:
@@ -759,15 +879,6 @@ export const CommunityNetwork: React.FC = () => {
                 placeholder="What does your group produce? e.g. We make cold-pressed groundnut oil using traditional wooden expellers..."
                 className="w-full p-3 text-sm rounded-xl border border-slate-200 focus:outline-none focus:border-[#159B68]"
               />
-            </div>
-
-            <div className="flex justify-end gap-2 pt-2">
-              <Button variant="ghost" size="md" onClick={() => setShowJoinModal(false)}>
-                Cancel
-              </Button>
-              <Button type="submit" variant="teal" size="md" className="bg-[#159B68] text-white font-bold">
-                Publish My Profile
-              </Button>
             </div>
           </form>
         </Modal>

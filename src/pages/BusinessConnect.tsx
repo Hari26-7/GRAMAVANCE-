@@ -147,6 +147,7 @@ export const BusinessConnect: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedBuyer, setSelectedBuyer] = useState<BuyerRFQ | null>(null);
   const [selectedProduct, setSelectedProduct] = useState<RuralProduct | null>(null);
+  const [selectedConnection, setSelectedConnection] = useState<typeof MOCK_BUSINESS_CONNECTIONS[0] | null>(null);
   const [showAddProductModal, setShowAddProductModal] = useState(false);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
 
@@ -455,7 +456,7 @@ export const BusinessConnect: React.FC = () => {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => alert(`Connection details for ${conn.partnerName}: Contact phone is verified under your registered profile.`)}
+                  onClick={() => setSelectedConnection(conn)}
                   className="min-h-[40px] text-xs font-semibold"
                 >
                   View Details
@@ -474,8 +475,30 @@ export const BusinessConnect: React.FC = () => {
           title="List My Product for Wholesale Sale"
           description="Enter your product details so verified wholesale buyers can reach you."
           size="md"
+          footer={
+            <div className="w-full flex items-center justify-end gap-3">
+              <Button
+                type="button"
+                variant="outline"
+                size="md"
+                onClick={() => setShowAddProductModal(false)}
+                className="min-h-[44px]"
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                form="add-product-listing-form"
+                variant="teal"
+                size="md"
+                className="min-h-[44px] bg-[#159B68] text-white font-bold"
+              >
+                Publish Listing
+              </Button>
+            </div>
+          }
         >
-          <form onSubmit={handleAddProduct} className="space-y-4 text-left">
+          <form id="add-product-listing-form" onSubmit={handleAddProduct} className="space-y-4 text-left">
             <div>
               <label className="block text-sm font-bold text-[#172B3A] dark:text-white mb-1">
                 Product Name:
@@ -551,26 +574,6 @@ export const BusinessConnect: React.FC = () => {
                 />
               </div>
             </div>
-
-            <div className="pt-3 border-t border-slate-200 dark:border-slate-800 flex justify-end gap-3">
-              <Button
-                type="button"
-                variant="outline"
-                size="md"
-                onClick={() => setShowAddProductModal(false)}
-                className="min-h-[44px]"
-              >
-                Cancel
-              </Button>
-              <Button
-                type="submit"
-                variant="teal"
-                size="md"
-                className="min-h-[44px] bg-[#159B68] text-white font-bold"
-              >
-                Publish Listing
-              </Button>
-            </div>
           </form>
         </Modal>
       )}
@@ -586,6 +589,37 @@ export const BusinessConnect: React.FC = () => {
           title={selectedBuyer ? `Contact Buyer: ${selectedBuyer.buyerName}` : `Inquire: ${selectedProduct?.name}`}
           description="Send an inquiry with your available quantity and contact details."
           size="md"
+          footer={
+            <div className="w-full flex items-center justify-between gap-3">
+              <Button
+                variant="outline"
+                size="md"
+                onClick={() => {
+                  setSelectedBuyer(null);
+                  setSelectedProduct(null);
+                }}
+                className="min-h-[44px]"
+              >
+                Close
+              </Button>
+              <Button
+                variant="teal"
+                size="md"
+                onClick={handleSendInquiry}
+                className="min-h-[44px] bg-[#159B68] text-white font-bold"
+              >
+                {inquirySuccess ? (
+                  <span className="flex items-center gap-1">
+                    <Check className="w-4 h-4" /> Message Sent!
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-1">
+                    <Send className="w-4 h-4" /> Send Contact Request
+                  </span>
+                )}
+              </Button>
+            </div>
+          }
         >
           <div className="space-y-4 text-left">
             <div className="p-4 bg-[#F4F9F6] dark:bg-slate-800 rounded-xl space-y-2 text-xs sm:text-sm">
@@ -612,35 +646,60 @@ export const BusinessConnect: React.FC = () => {
                 className="w-full p-3 text-sm rounded-xl border-2 border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-[#172B3A] dark:text-white focus:outline-none focus:border-[#159B68]"
               />
             </div>
+          </div>
+        </Modal>
+      )}
 
-            <div className="pt-3 border-t border-slate-200 dark:border-slate-800 flex justify-end gap-3">
+      {/* Modal: View Details of Inquiry / Connection */}
+      {selectedConnection && (
+        <Modal
+          isOpen={!!selectedConnection}
+          onClose={() => setSelectedConnection(null)}
+          title={`Connection: ${selectedConnection.partnerName}`}
+          description={`${selectedConnection.partnerRole} • ${selectedConnection.partnerLocation}`}
+          size="md"
+          footer={
+            <div className="w-full flex items-center justify-between gap-3">
               <Button
                 variant="outline"
                 size="md"
-                onClick={() => {
-                  setSelectedBuyer(null);
-                  setSelectedProduct(null);
-                }}
+                onClick={() => setSelectedConnection(null)}
                 className="min-h-[44px]"
               >
-                Cancel
+                Close
               </Button>
-              <Button
-                variant="teal"
-                size="md"
-                onClick={handleSendInquiry}
-                className="min-h-[44px] bg-[#159B68] text-white font-bold"
+              <a
+                href={`tel:${selectedConnection.partnerPhone || '9845012345'}`}
+                className="inline-flex items-center justify-center gap-1.5 px-4 min-h-[44px] rounded-xl bg-[#159B68] hover:bg-emerald-700 text-white font-bold text-sm"
               >
-                {inquirySuccess ? (
-                  <span className="flex items-center gap-1">
-                    <Check className="w-4 h-4" /> Message Sent!
-                  </span>
-                ) : (
-                  <span className="flex items-center gap-1">
-                    <Send className="w-4 h-4" /> Send Contact Request
-                  </span>
-                )}
-              </Button>
+                Call Partner
+              </a>
+            </div>
+          }
+        >
+          <div className="space-y-4 text-left">
+            <div className="p-4 bg-emerald-50/60 dark:bg-emerald-950/30 rounded-xl space-y-2 border border-emerald-200 dark:border-emerald-800 text-sm">
+              <div>
+                <span className="text-xs text-slate-500 block">Product / Subject:</span>
+                <strong className="text-base text-slate-900 dark:text-white">{selectedConnection.productOrTopic}</strong>
+              </div>
+              <div className="grid grid-cols-2 gap-2 pt-2 border-t border-emerald-200/60 dark:border-emerald-800/60 text-xs">
+                <div>
+                  <span className="text-slate-500">Agreed Terms:</span>
+                  <strong className="block text-[#159B68] font-bold">{selectedConnection.quantityOrBudget}</strong>
+                </div>
+                <div>
+                  <span className="text-slate-500">Initiated Date:</span>
+                  <strong className="block text-slate-700 dark:text-slate-300">{selectedConnection.date}</strong>
+                </div>
+              </div>
+            </div>
+
+            <div className="p-3.5 bg-slate-50 dark:bg-slate-800 rounded-xl space-y-1 text-xs">
+              <span className="text-slate-500 block font-semibold">Verification & KYC Status:</span>
+              <p className="text-slate-700 dark:text-slate-300">
+                Partner identity and business registration have been cross-verified with registered mobile credentials. All communications are logged for community security.
+              </p>
             </div>
           </div>
         </Modal>

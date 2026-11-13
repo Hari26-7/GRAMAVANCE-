@@ -1,16 +1,19 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { X } from 'lucide-react';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+import { lockBodyScroll, unlockBodyScroll } from '../../utils/scrollLock';
 
 export interface ModalProps {
   isOpen: boolean;
   onClose: () => void;
-  title?: string;
-  description?: string;
+  title?: React.ReactNode;
+  description?: React.ReactNode;
   children: React.ReactNode;
-  size?: 'sm' | 'md' | 'lg' | 'xl';
+  footer?: React.ReactNode;
+  size?: 'sm' | 'md' | 'lg' | 'xl' | 'full';
   className?: string;
+  showCloseButton?: boolean;
 }
 
 export const Modal: React.FC<ModalProps> = ({
@@ -19,20 +22,33 @@ export const Modal: React.FC<ModalProps> = ({
   title,
   description,
   children,
+  footer,
   size = 'md',
   className,
+  showCloseButton = true,
 }) => {
+  const backdropRef = useRef<HTMLDivElement>(null);
+  const mouseDownTargetRef = useRef<EventTarget | null>(null);
+
+  // Bulletproof body scroll locking & keyboard escape listener
   useEffect(() => {
+    if (!isOpen) return;
+
+    lockBodyScroll();
+
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        e.stopPropagation();
+        onClose();
+      }
     };
-    if (isOpen) {
-      document.body.style.overflow = 'hidden';
-      window.addEventListener('keydown', handleKeyDown);
-    }
+
+    window.addEventListener('keydown', handleKeyDown);
+
     return () => {
-      document.body.style.overflow = 'unset';
       window.removeEventListener('keydown', handleKeyDown);
+      unlockBodyScroll();
     };
   }, [isOpen, onClose]);
 
@@ -43,48 +59,90 @@ export const Modal: React.FC<ModalProps> = ({
     md: 'max-w-lg',
     lg: 'max-w-2xl',
     xl: 'max-w-4xl',
+    full: 'max-w-6xl',
+  };
+
+  // Only close if mousedown and click both occurred on the backdrop itself (prevents accidental closing on text drag)
+  const handleBackdropMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+    mouseDownTargetRef.current = e.target;
+  };
+
+  const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (
+      mouseDownTargetRef.current === backdropRef.current &&
+      e.target === backdropRef.current
+    ) {
+      onClose();
+    }
+    mouseDownTargetRef.current = null;
   };
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs transition-opacity duration-150"
-      onClick={onClose}
+      ref={backdropRef}
+      onMouseDown={handleBackdropMouseDown}
+      onClick={handleBackdropClick}
+      className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/70 dark:bg-slate-950/80 backdrop-blur-xs overscroll-contain transition-opacity duration-200"
+      role="dialog"
+      aria-modal="true"
     >
-      <div
-        className={twMerge(
-          clsx(
-            'w-full bg-white dark:bg-slate-900 border border-[#E3E7ED] dark:border-slate-800 rounded-2xl shadow-[0_10px_35px_rgba(32,43,60,0.12)] overflow-hidden flex flex-col max-h-[90vh] transition-all duration-150',
-            sizeClasses[size],
-            className
-          )
-        )}
-        onClick={(e) => e.stopPropagation()}
-        role="dialog"
-        aria-modal="true"
-      >
-        <div className="flex items-center justify-between p-5 border-b border-slate-100 dark:border-slate-800">
-          <div>
-            {title && (
-              <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
-                {title}
-              </h3>
-            )}
-            {description && (
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                {description}
-              </p>
-            )}
+      {/* Outer flex container ensuring vertical alignment and scrollability */}
+      <div className="flex min-h-full items-center justify-center p-3 sm:p-5 text-center">
+        <div
+          className={twMerge(
+            clsx(
+              'w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[calc(100vh-3.5rem)] my-auto text-left transition-all duration-200 animate-in fade-in zoom-in-95',
+              sizeClasses[size],
+              className
+            )
+          )}
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* Header (shrink-0 prevents squishing on small viewports) */}
+          {(title || showCloseButton) && (
+            <div className="flex items-start justify-between p-4 sm:p-5 border-b border-slate-100 dark:border-slate-800 shrink-0 bg-white/95 dark:bg-slate-900/95 sticky top-0 z-10">
+              <div className="pr-4">
+                {title && (
+                  <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-slate-100 leading-snug">
+                    {title}
+                  </h3>
+                )}
+                {description && (
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed">
+                    {description}
+                  </p>
+                )}
+              </div>
+
+              {showCloseButton && (
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="p-2 -mr-1 -mt-1 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer shrink-0 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  aria-label="Close dialog (Escape)"
+                  title="Close dialog (Escape)"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              )}
+            </div>
+          )}
+
+          {/* Scrollable Content Area */}
+          <div className="flex-1 overflow-y-auto p-4 sm:p-6 overscroll-contain leading-relaxed">
+            {children}
           </div>
-          <button
-            onClick={onClose}
-            className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-            aria-label="Close modal"
-          >
-            <X className="w-5 h-5" />
-          </button>
+
+          {/* Optional Pinned Footer */}
+          {footer && (
+            <div className="p-3.5 sm:p-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-950/50 shrink-0 flex items-center justify-end gap-2.5">
+              {footer}
+            </div>
+          )}
         </div>
-        <div className="p-6 overflow-y-auto">{children}</div>
       </div>
     </div>
   );
 };
+
+export default Modal;
