@@ -4,8 +4,13 @@ import ChatWelcomeScreen from './chat/ChatWelcomeScreen';
 import ChatMessageItem, { type ChatMessage } from './chat/ChatMessageItem';
 import ChatComposer from './chat/ChatComposer';
 import { useSpeechRecognition, type SpeechLanguage } from '../hooks/useSpeechRecognition';
-import { sendGeminiChat } from '../services/geminiService';
+import {
+  sendGeminiChat,
+  sendSupabaseEdgeChat,
+  checkCopilotOnlineStatus,
+} from '../services/geminiService';
 import { useLanguage } from '../context/LanguageContext';
+import type { LanguageCode } from '../types';
 import { Sparkles } from 'lucide-react';
 
 export default function GramavanceChat() {
@@ -75,15 +80,33 @@ export default function GramavanceChat() {
     scrollToBottom();
   }, [messages, isLoading, scrollToBottom]);
 
-  // Monitor network online status
+  // Monitor real AI service and network online status
   useEffect(() => {
-    const handleOnline = () => setIsOnline(true);
-    const handleOffline = () => setIsOnline(false);
+    let isMounted = true;
+
+    const verifyAiService = async () => {
+      if (!navigator.onLine) {
+        if (isMounted) setIsOnline(false);
+        return;
+      }
+      const online = await checkCopilotOnlineStatus();
+      if (isMounted) setIsOnline(online);
+    };
+
+    verifyAiService();
+    const interval = setInterval(verifyAiService, 30000);
+
+    const handleOnline = () => verifyAiService();
+    const handleOffline = () => {
+      if (isMounted) setIsOnline(false);
+    };
 
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
 
     return () => {
+      isMounted = false;
+      clearInterval(interval);
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
     };
@@ -112,8 +135,8 @@ export default function GramavanceChat() {
     setIsLoading(false);
   };
 
-  // Send message to Gemini LLM
-  const handleSendMessage = async (textToSend?: string) => {
+  // Send message to Gemini LLM via Supabase Edge Function with resilient fallbacks
+  const handleSendMessage = async (textToSend?: string, isRetry: boolean = false) => {
     const messageText = (textToSend || input).trim();
     if (!messageText || isLoading) return;
 
@@ -122,45 +145,116 @@ export default function GramavanceChat() {
       stopListening();
     }
 
-    const userMsg: ChatMessage = {
-      id: `usr_${Date.now()}`,
-      role: 'user',
-      text: messageText,
-      timestamp: getCurrentTime(),
-    };
+    if (!isRetry) {
+      const userMsg: ChatMessage = {
+        id: `usr_${Date.now()}`,
+        role: 'user',
+        text: messageText,
+        timestamp: getCurrentTime(),
+      };
+      setMessages((prev) => [...prev, userMsg]);
+      setInput('');
+    }
 
-    setMessages((prev) => [...prev, userMsg]);
-    setInput('');
     setIsLoading(true);
 
     const abortController = new AbortController();
     abortControllerRef.current = abortController;
 
-    try {
-      // 1. Try serverless /api/chat backend endpoint
-      const response = await fetch('/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: messageText }),
-        signal: abortController.signal,
-      });
+    const appLangCode: LanguageCode =
+      speechLanguage === 'ta-IN' ? 'ta' : speechLanguage === 'hi-IN' ? 'hi' : 'en';
 
-      if (response.ok) {
-        const data = await response.json();
-        if (data && data.text) {
+    // Format recent chat history for context
+    const recentHistory = messages
+      .filter((m) => !m.isError)
+      .slice(-6)
+      .map((m) => ({
+        role: (m.role === 'user' ? 'user' : 'model') as 'user' | 'model',
+        text: m.text,
+      }));
+
+    try {
+      // 1. Primary: Secure Supabase Edge Function (Project: Gramavance ymqcfmfibbcizwqohcyp)
+      try {
+        const edgeResult = await sendSupabaseEdgeChat(
+          messageText,
+          recentHistory,
+          appLangCode,
+          abortController.signal
+        );
+
+        if (edgeResult && edgeResult.text) {
           const aiMsg: ChatMessage = {
             id: `ai_${Date.now()}`,
             role: 'ai',
-            text: data.text,
+            text: edgeResult.text,
             timestamp: getCurrentTime(),
           };
           setMessages((prev) => [...prev, aiMsg]);
+          setIsOnline(true);
           return;
         }
+      } catch (edgeError: any) {
+        if (edgeError?.name === 'AbortError') throw edgeError;
+        console.warn(
+          '[Gramavance Copilot] Supabase Edge Function route unavailable, trying serverless fallback...',
+          edgeError
+        );
       }
-      throw new Error(`Serverless endpoint returned status ${response.status}`);
-    } catch (serverError: any) {
-      if (serverError?.name === 'AbortError') {
+
+      // 2. Secondary: Serverless /api/chat route (Vercel)
+      try {
+        const response = await fetch('/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: messageText, language: appLangCode }),
+          signal: abortController.signal,
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          if (data && data.text) {
+            const aiMsg: ChatMessage = {
+              id: `ai_${Date.now()}`,
+              role: 'ai',
+              text: data.text,
+              timestamp: getCurrentTime(),
+            };
+            setMessages((prev) => [...prev, aiMsg]);
+            setIsOnline(true);
+            return;
+          }
+        }
+      } catch (serverError: any) {
+        if (serverError?.name === 'AbortError') throw serverError;
+        console.warn(
+          '[Gramavance Copilot] Serverless route unavailable, executing direct SDK fallback...',
+          serverError
+        );
+      }
+
+      // 3. Tertiary: Direct client SDK fallback using supported models
+      try {
+        const fallback = await sendGeminiChat([{ role: 'user', text: messageText }], appLangCode);
+        if (fallback.text) {
+          const aiMsg: ChatMessage = {
+            id: `ai_${Date.now()}`,
+            role: 'ai',
+            text: fallback.text,
+            timestamp: getCurrentTime(),
+          };
+          setMessages((prev) => [...prev, aiMsg]);
+          setIsOnline(true);
+          return;
+        }
+      } catch (clientError: any) {
+        if (clientError?.name === 'AbortError') throw clientError;
+        console.error('[Gramavance Copilot] Direct SDK fallback failed:', clientError);
+      }
+
+      throw new Error('All Gemini AI connection routes exhausted');
+    } catch (finalError: any) {
+      if (finalError?.name === 'AbortError') {
         const abortMsg: ChatMessage = {
           id: `ai_abort_${Date.now()}`,
           role: 'ai',
@@ -171,33 +265,11 @@ export default function GramavanceChat() {
         return;
       }
 
-      console.warn('[Gramavance Copilot] Serverless route unavailable, executing direct fallback...', serverError);
-
-      try {
-        // 2. Direct client SDK fallback
-        const appLangCode = speechLanguage === 'ta-IN' ? 'ta' : speechLanguage === 'hi-IN' ? 'hi' : 'en';
-        const fallback = await sendGeminiChat([{ role: 'user', text: messageText }], appLangCode);
-
-        if (fallback.text) {
-          const aiMsg: ChatMessage = {
-            id: `ai_${Date.now()}`,
-            role: 'ai',
-            text: fallback.text,
-            timestamp: getCurrentTime(),
-          };
-          setMessages((prev) => [...prev, aiMsg]);
-          return;
-        }
-      } catch (clientError: any) {
-        if (clientError?.name === 'AbortError') return;
-        console.error('[Gramavance Copilot] Fallback failed:', clientError);
-      }
-
-      // 3. Clear error presentation if both failed
+      setIsOnline(false);
       const errorMsg: ChatMessage = {
         id: `ai_err_${Date.now()}`,
         role: 'ai',
-        text: '⚠️ Unable to connect to Gemini AI services. Please verify your internet connection or ensure your Gemini API key is configured in settings.',
+        text: '⚠️ Unable to connect to Gemini AI services. Please verify your connection or click Retry Message below.',
         timestamp: getCurrentTime(),
         isError: true,
       };
@@ -214,16 +286,16 @@ export default function GramavanceChat() {
     const lastUserMsg = [...messages].reverse().find((m) => m.role === 'user');
     if (!lastUserMsg) return;
 
-    // Remove the latest AI response and re-query
+    // Remove the latest AI response or error message and re-query
     setMessages((prev) => {
       const copy = [...prev];
-      if (copy[copy.length - 1].role === 'ai') {
+      if (copy.length > 0 && copy[copy.length - 1].role === 'ai') {
         copy.pop();
       }
       return copy;
     });
 
-    handleSendMessage(lastUserMsg.text);
+    handleSendMessage(lastUserMsg.text, true);
   };
 
   // Retry on error

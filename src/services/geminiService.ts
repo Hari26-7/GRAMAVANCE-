@@ -12,6 +12,7 @@
  */
 
 import type { LanguageCode } from '../types';
+import { supabaseUrl, supabaseAnonKey } from '../lib/supabase';
 
 export interface GeminiMessage {
   role: 'user' | 'model';
@@ -47,9 +48,10 @@ Verified Scheme Facts:
 - Essential Documents: Aadhaar Card, Bank Passbook, Machinery/Shop Quotation, Land Patta or Rent Agreement.`;
 
 const CANDIDATE_MODELS = [
-  'gemini-3.8-flash',
-  'gemini-3.5-flash',
   'gemini-3.5-flash-lite',
+  'gemini-3.1-flash-lite',
+  'gemini-3.5-flash',
+  'gemini-3.8-flash',
 ];
 
 export const getGeminiApiKey = (): string => {
@@ -264,4 +266,73 @@ export async function sendGeminiChat(
     isLiveAI: false,
     error: lastErrorMessage,
   };
+}
+
+/**
+ * Call the secure Supabase Edge Function to generate an AI response
+ */
+export async function sendSupabaseEdgeChat(
+  message: string,
+  history: GeminiMessage[] = [],
+  language: LanguageCode = 'en',
+  signal?: AbortSignal
+): Promise<{ text: string; model?: string }> {
+  const endpoint = `${supabaseUrl}/functions/v1/gemini-chat`;
+
+  const response = await fetch(endpoint, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'apikey': supabaseAnonKey,
+      'Authorization': `Bearer ${supabaseAnonKey}`,
+    },
+    body: JSON.stringify({
+      message,
+      history,
+      language,
+    }),
+    signal,
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(
+      errorData?.error || `Supabase Edge Function returned HTTP ${response.status}`
+    );
+  }
+
+  const data = await response.json();
+  if (!data?.text) {
+    throw new Error('Empty response received from Supabase Edge Function');
+  }
+
+  return {
+    text: data.text,
+    model: data.model,
+  };
+}
+
+/**
+ * Health check to verify whether Supabase Edge Function / Copilot service is genuinely online
+ */
+export async function checkCopilotOnlineStatus(): Promise<boolean> {
+  try {
+    const endpoint = `${supabaseUrl}/functions/v1/gemini-chat`;
+    const res = await fetch(endpoint, {
+      method: 'GET',
+      headers: {
+        'apikey': supabaseAnonKey,
+        'Authorization': `Bearer ${supabaseAnonKey}`,
+      },
+    });
+    return res.ok;
+  } catch {
+    // If Supabase edge function cannot be reached, test /api/chat
+    try {
+      const vercelRes = await fetch('/api/chat', { method: 'GET' });
+      return vercelRes.ok;
+    } catch {
+      return false;
+    }
+  }
 }
